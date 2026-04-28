@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Funções Auxiliares
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (getRole() == 'adm_l1' || getRole() == 'adm_l2' || getRole() == 'adm');
+    }
+
+    function isTI() {
+      return isAuthenticated() && (isAdmin() || getRole() == 'ti');
+    }
+
+    // Configurações Globais (Permissões por Cargo)
+    match /config/permissions {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Coleção de Usuários
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Módulo Empréstimo
+    match /notebooks/{notebookId} {
+      allow read: if isAuthenticated();
+      allow write: if isTI();
+    }
+
+    // Módulo Ensalamento
+    match /courses/{courseId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /classes/{classId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /rooms/{roomId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /calendarEntries/{entryId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Bloqueio Global para outras coleções não especificadas
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

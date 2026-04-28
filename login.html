@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login · Órbita Fatec</title>
+  <link rel="stylesheet" href="/login.css">
+</head>
+<body>
+
+  <div class="particles"></div>
+
+  <div class="orbit-wrapper">
+    <div class="orbit-container">
+      <div class="orbit-center">F</div>
+      <div class="orbit-planet"></div>
+    </div>
+    <span class="login-logo">
+      <span class="logo-orbita">ÓRBITA</span>
+      <span class="logo-fatec">FATEC</span>
+    </span>
+  </div>
+
+  <div class="login-card">
+    <p class="login-subtitle">Acesso ao Sistema</p>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label>E-mail Institucional</label>
+        <input type="email" id="login-email" class="form-input" placeholder="usuario@fatec.sp.gov.br" required>
+      </div>
+      
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="login-password" class="form-input" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="login-btn" id="login-btn">
+        <span id="login-btn-text">Entrar</span>
+      </button>
+
+      <p id="login-error">E-mail ou senha incorretos.</p>
+    </form>
+  </div>
+
+  <script type="module" src="/login.js"></script>
+</body>
+</html>
