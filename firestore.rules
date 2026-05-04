@@ -9,7 +9,7 @@ service cloud.firestore {
     }
 
     function getRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'visitante');
     }
 
     function isAdmin() {
@@ -30,10 +30,11 @@ service cloud.firestore {
 
     // Coleção de Usuários
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      // Permitir ler o próprio perfil
+      allow get: if isAuthenticated() && request.auth.uid == userId;
+      // Administradores podem ler todos e listar
+      allow read, list: if isAdmin();
       allow write: if isAdmin();
-      // O próprio usuário pode ler seus dados
-      allow read: if isAuthenticated() && request.auth.uid == userId;
     }
 
     // Módulo Notas (Meu Espaço)

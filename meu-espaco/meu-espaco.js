@@ -63,7 +63,7 @@ async function renderWidgets(role) {
   }
 
   // Widget Usuários
-  if (modules.includes('usuarios')) {
+  if (modules.includes('usuarios') && (role === 'adm_l1' || role === 'adm_l2')) {
     const card = createWidgetCard('👥', 'Usuários Ativos', '...', 'usuarios');
     container.appendChild(card);
     const snap = await getDocs(collection(db, 'users'));
@@ -302,7 +302,7 @@ function setupNotices(role) {
   const canManage = (role === 'adm_l1' || role === 'adm_l2');
   if (canManage) btnManage.classList.remove('hidden');
 
-  const noticesRef = collection(db, 'institutionalNotices');
+  const noticesRef = collection(db, 'notices');
   // Simplificar consulta para evitar erro de índice composto
   const q = query(noticesRef, orderBy('createdAt', 'desc'));
 
@@ -364,10 +364,10 @@ async function saveNotice(e) {
 
   try {
     if (id) {
-      await updateDoc(doc(db, 'institutionalNotices', id), data);
+      await updateDoc(doc(db, 'notices', id), data);
     } else {
       data.createdAt = serverTimestamp();
-      await setDoc(doc(collection(db, 'institutionalNotices')), data);
+      await setDoc(doc(collection(db, 'notices')), data);
     }
     fecharModal('modal-notice');
   } catch (err) {
@@ -378,7 +378,7 @@ async function saveNotice(e) {
 async function deleteNotice(id, title) {
   if (confirm(`Deseja excluir permanentemente o aviso "${title}"?`)) {
     try {
-      await deleteDoc(doc(db, 'institutionalNotices', id));
+      await deleteDoc(doc(db, 'notices', id));
     } catch (err) {
       alert("Erro ao excluir: " + err.message);
     }

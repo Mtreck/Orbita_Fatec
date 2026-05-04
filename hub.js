@@ -62,10 +62,14 @@ async function initDashboard(user, role) {
   }
 
   // Carregar KPIs do Firebase (Exemplo Assíncrono)
-  loadKPIs();
+  loadKPIs(role);
 }
 
-async function loadKPIs() {
+async function loadKPIs(role) {
+  const isAdmin = (role === 'adm_l1' || role === 'adm_l2');
+  const isRH    = (role === 'rh' || isAdmin);
+  const isTI    = (role === 'ti' || isAdmin);
+
   try {
     // 1. Empréstimos ativos
     const kpiEmprestimos = document.getElementById('kpi-emprestimos');
@@ -85,9 +89,11 @@ async function loadKPIs() {
   try {
     // 2. Usuários ativos
     const kpiUsuarios = document.getElementById('kpi-usuarios');
-    if (kpiUsuarios) {
+    if (kpiUsuarios && isAdmin) {
       const userSnap = await getDocs(collection(db, 'users'));
       kpiUsuarios.textContent = userSnap.size.toString();
+    } else if (kpiUsuarios) {
+      kpiUsuarios.parentElement.style.display = 'none';
     }
   } catch(e) {
     console.error("Erro ao carregar KPIs de usuários:", e);
@@ -96,7 +102,7 @@ async function loadKPIs() {
   try {
     // 3. Salas Ocupadas Hoje
     const kpiSalas = document.getElementById('kpi-salas');
-    if (kpiSalas) {
+    if (kpiSalas && isAdmin) {
       // Pega o dia da semana atual (1=Segunda ... 5=Sexta). Domingo=0, Sábado=6
       let diaHoje = new Date().getDay(); 
       if (diaHoje >= 1 && diaHoje <= 5) {
@@ -113,6 +119,8 @@ async function loadKPIs() {
       } else {
         kpiSalas.textContent = "0"; // Fim de semana
       }
+    } else if (kpiSalas) {
+      kpiSalas.parentElement.style.display = 'none';
     }
   } catch(e) {
     console.error("Erro ao carregar KPIs de salas:", e);
@@ -121,7 +129,7 @@ async function loadKPIs() {
   try {
     // 4. Horas Registradas
     const kpiHoras = document.getElementById('kpi-horas');
-    if (kpiHoras) {
+    if (kpiHoras && isRH) {
       const funcSnap = await getDocs(collection(db, 'funcionarios_rh'));
       let totalHoras = 0;
       funcSnap.forEach(doc => {
@@ -129,6 +137,8 @@ async function loadKPIs() {
         if (data.totalHorasExtras) totalHoras += data.totalHorasExtras;
       });
       kpiHoras.textContent = `${Math.round(totalHoras)}h`;
+    } else if (kpiHoras) {
+      kpiHoras.parentElement.style.display = 'none';
     }
   } catch(e) {
     console.error("Erro ao carregar KPIs de horas:", e);
