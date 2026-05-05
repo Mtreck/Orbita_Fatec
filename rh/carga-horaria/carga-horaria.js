@@ -9,8 +9,9 @@ import {
   updateDoc, deleteDoc, onSnapshot, query, where, orderBy,
   Timestamp, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-import { firebaseConfig } from "../../firebase-config.js";
-import { setupLayout } from "../../layout.js";
+import { firebaseConfig } from "../../core/firebase-config.js";
+import { setupLayout } from "../../core/layout.js";
+import { escapeHTML as esc } from "../../core/security.js";
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -25,7 +26,6 @@ let currentEventData = null;    // Objeto com dados do evento (datas, etc)
 let histFuncAtual   = null;     // funcionário selecionado no histórico
 let editingFuncId   = null;     // ID ao editar funcionário
 
-const esc = s => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
 const TURNO_LABEL = { manha:'Manhã', tarde:'Tarde', noite:'Noite', integral:'Integral' };
 

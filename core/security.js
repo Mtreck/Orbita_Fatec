@@ -77,7 +77,7 @@ export const orbitaLimiter = new RateLimiter();
 
 /**
  * Sanitização básica de HTML para prevenir XSS no editor Rich Text.
- * Permite apenas tags seguras e remove atributos.
+ * Permite apenas tags seguras e remove todos os atributos.
  */
 export function sanitizeHTML(html) {
   if (!html) return '';
@@ -89,17 +89,16 @@ export function sanitizeHTML(html) {
       const child = node.childNodes[i];
       if (child.nodeType === 1) { // Elemento
         if (!allowedTags.includes(child.tagName)) {
-          // Substitui tag não permitida pelo seu conteúdo de texto
           const text = document.createTextNode(child.textContent);
           node.replaceChild(text, child);
         } else {
-          // Remove todos os atributos (como onclick, style, etc)
+          // Remove TODOS os atributos (segurança contra onclick, etc)
           while (child.attributes.length > 0) {
             child.removeAttribute(child.attributes[0].name);
           }
           clean(child);
         }
-      } else if (child.nodeType !== 3) { // Não é texto nem elemento (ex: comentários)
+      } else if (child.nodeType !== 3) {
         node.removeChild(child);
       }
     }
@@ -107,6 +106,16 @@ export function sanitizeHTML(html) {
 
   clean(doc.body);
   return doc.body.innerHTML;
+}
+
+/**
+ * Escapa caracteres HTML para exibição segura de texto puro.
+ */
+export function escapeHTML(str) {
+  if (!str) return "";
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 /**

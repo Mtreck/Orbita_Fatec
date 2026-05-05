@@ -1,4 +1,4 @@
-import { MODULES, getRoleConfig, hasPermission } from './permissions.js';
+import { MODULES, CATEGORIES, getRoleConfig, hasPermission } from './permissions.js';
 
 export function setupLayout(user, role, activeModuleId, onLogout) {
   // Validar permissão (se não for o dashboard ou visitante)
@@ -31,16 +31,66 @@ export function setupLayout(user, role, activeModuleId, onLogout) {
   const nav = document.createElement('nav');
   nav.className = 'layout-nav';
   
-  Object.keys(MODULES).forEach(key => {
-    if (roleConfig.modules.includes(key)) {
-      const mod = MODULES[key];
-      const link = document.createElement('a');
-      link.href = mod.url;
-      link.className = `layout-nav-item ${key === activeModuleId ? 'active' : ''}`;
-      link.innerHTML = `${mod.icon} <span>${mod.title}</span>`;
-      nav.appendChild(link);
+  // 1. Renderizar Módulos sem Categoria (Top-level)
+  const topLevelModules = Object.values(MODULES).filter(mod => 
+    !mod.category && roleConfig.modules.includes(mod.id)
+  );
+
+  topLevelModules.forEach(mod => {
+    const link = document.createElement('a');
+    link.href = mod.url;
+    link.className = `layout-nav-item ${mod.id === activeModuleId ? 'active' : ''}`;
+    link.innerHTML = `${mod.icon} <span>${mod.title}</span>`;
+    nav.appendChild(link);
+  });
+
+  // 2. Renderizar por Categorias
+  Object.entries(CATEGORIES).forEach(([catKey, catLabel]) => {
+    // Filtrar módulos desta categoria que o usuário tem permissão
+    const permittedInCat = Object.values(MODULES).filter(mod => 
+      mod.category === catKey && roleConfig.modules.includes(mod.id)
+    );
+
+    if (permittedInCat.length > 0) {
+      const catWrapper = document.createElement('div');
+      catWrapper.className = 'layout-nav-section';
+
+      // Verificar se o módulo ativo está nesta categoria para deixá-la aberta
+      const hasActiveMod = permittedInCat.some(m => m.id === activeModuleId);
+      const isCollapsed = !hasActiveMod;
+
+      // Adicionar Label da Categoria (com ícone de toggle)
+      const label = document.createElement('div');
+      label.className = `layout-nav-category ${isCollapsed ? 'collapsed' : ''}`;
+      label.innerHTML = `
+        <span>${catLabel}</span>
+        <svg class="category-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+      `;
+      
+      const group = document.createElement('div');
+      group.className = `layout-nav-group ${isCollapsed ? 'collapsed' : ''}`;
+
+      // Toggle Logic
+      label.addEventListener('click', () => {
+        label.classList.toggle('collapsed');
+        group.classList.toggle('collapsed');
+      });
+
+      // Adicionar Módulos
+      permittedInCat.forEach(mod => {
+        const link = document.createElement('a');
+        link.href = mod.url;
+        link.className = `layout-nav-item ${mod.id === activeModuleId ? 'active' : ''}`;
+        link.innerHTML = `${mod.icon} <span>${mod.title}</span>`;
+        group.appendChild(link);
+      });
+
+      catWrapper.appendChild(label);
+      catWrapper.appendChild(group);
+      nav.appendChild(catWrapper);
     }
   });
+  
   sidebar.appendChild(nav);
 
   // Criar Header

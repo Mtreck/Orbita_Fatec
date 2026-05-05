@@ -1,6 +1,7 @@
 import * as fb from './firebase-service.js';
 import { SimulationEngine } from './simulation-engine.js';
-import { setupLayout } from '../layout.js';
+import { setupLayout } from '../core/layout.js';
+import { escapeHTML as esc } from '../core/security.js';
 
 // --- STATE MANAGEMENT ---
 let currentTab = 'calendario';
@@ -12,8 +13,6 @@ let currentUser = null;
 let simulationLessons = []; // Temp lessons for simulator
 let currentSimulationResults = [];
 
-// Função de escape para prevenir XSS
-const esc = (str) => String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
 
 // --- CONSTANTS ---
 const WEEKDAYS = {
@@ -45,12 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
           perms = allPerms[role]?.ensalamento || { view: false, execute: false };
         }
       } catch (err) {
-        console.error("Erro ao buscar permissões globais:", err);
+        // Falha silenciosa para segurança
       }
 
       // ADM L1 entra direto. Outros precisam de 'view'.
       if (role !== 'adm_l1' && !perms.view) {
-        window.location.href = '/';
+        window.location.href = '../meu-espaco/index.html';
         return;
       }
 
@@ -61,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       initApp(role);
     } else {
-      window.location.href = '/login';
+      window.location.href = '../auth/login.html';
     }
   });
 });
@@ -155,6 +154,7 @@ function setupEventListeners() {
   document.getElementById('btn-open-simulation').addEventListener('click', openSimulationModal);
   document.getElementById('btn-sim-add-lesson').addEventListener('click', addLessonToSimulation);
   document.getElementById('btn-run-simulation').addEventListener('click', runSimulation);
+  document.getElementById('btn-sim-institutional').addEventListener('click', applyInstitutionalPattern);
   document.getElementById('btn-back-to-lessons').addEventListener('click', () => {
     document.getElementById('simulation-step-1').style.display = 'block';
     document.getElementById('simulation-step-2').style.display = 'none';
@@ -774,8 +774,44 @@ function openSimulationModal() {
   simulationLessons = [];
   renderSimulationLessons();
   
+  // Mostrar gargalos iniciais
+  renderBottlenecks();
+
   // Add 1 initial lesson
   addLessonToSimulation();
+}
+
+function renderBottlenecks() {
+  const container = document.getElementById('sim-bottlenecks');
+  if (!container) return;
+
+  const engine = new SimulationEngine(rooms, classes, calendarEntries);
+  const bottlenecks = engine.bottlenecks;
+
+  container.innerHTML = `
+    <h5 style="margin-bottom:1.2rem; font-size:0.7rem; color:#64748B; font-weight:800; letter-spacing:1px; text-transform:uppercase;">Capacidade Institucional Disponível</h5>
+    <div class="bottleneck-container">
+      ${Object.entries(bottlenecks).map(([day, data]) => `
+        <div class="bottleneck-card">
+          <h6>${WEEKDAYS[day]}</h6>
+          <div class="bottleneck-value" style="color:#1E293B">${data.available}</div>
+          <div style="font-size:0.6rem; color:#64748B; margin-bottom:0.8rem; text-transform:uppercase">salas livres</div>
+          <span class="bottleneck-status status-${data.status}">${data.status.toUpperCase()}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function applyInstitutionalPattern() {
+  simulationLessons = [
+    { id: 1, lessonNumber: 1, classType: 'presencial', periods: [1, 2], roomSelectionMode: 'auto', selectedRoomId: '', requiredRoomType: '', requiredResources: [] },
+    { id: 2, lessonNumber: 2, classType: 'presencial', periods: [1, 2], roomSelectionMode: 'auto', selectedRoomId: '', requiredRoomType: '', requiredResources: [] },
+    { id: 3, lessonNumber: 3, classType: 'presencial', periods: [1, 2], roomSelectionMode: 'auto', selectedRoomId: '', requiredRoomType: '', requiredResources: [] },
+    { id: 4, lessonNumber: 4, classType: 'ead', periods: [1, 2], roomSelectionMode: 'auto', selectedRoomId: '', requiredRoomType: '', requiredResources: [] },
+    { id: 5, lessonNumber: 5, classType: 'carga_reservada', periods: [1, 2], roomSelectionMode: 'auto', selectedRoomId: '', requiredRoomType: '', requiredResources: [] }
+  ];
+  renderSimulationLessons();
 }
 
 function addLessonToSimulation() {
@@ -890,68 +926,96 @@ async function runSimulation() {
     return;
   }
 
-  const distributionPreference = document.getElementById('sim-distribution-pref').value;
-  const engine = new SimulationEngine(rooms, classes, calendarEntries);
-  currentSimulationResults = engine.generateSuggestions(courseId, classIds, simulationLessons, distributionPreference);
+  const btn = document.getElementById('btn-run-simulation');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Simulando...';
+  btn.disabled = true;
 
-  // Persistir a simulação no Firebase como solicitado
-  await fb.create('simulations', {
-    courseId,
-    classIds,
-    lessons: simulationLessons,
-    suggestions: currentSimulationResults,
-    status: 'gerado',
-    createdBy: currentUser.uid
-  });
+  try {
+    const engine = new SimulationEngine(rooms, classes, calendarEntries);
+    currentSimulationResults = engine.generateSuggestions(courseId, classIds, simulationLessons);
 
-  renderSimulationResults();
-  
-  document.getElementById('simulation-step-1').style.display = 'none';
-  document.getElementById('simulation-step-2').style.display = 'block';
+    // Persistir a simulação no Firebase
+    await fb.create('simulations', {
+      courseId,
+      classIds,
+      lessons: simulationLessons,
+      suggestions: currentSimulationResults,
+      status: 'gerado',
+      createdBy: currentUser.uid
+    });
+
+    renderSimulationResults();
+    
+    document.getElementById('simulation-step-1').style.display = 'none';
+    document.getElementById('simulation-step-2').style.display = 'block';
+  } catch (error) {
+    console.error(error);
+    alert('Erro ao rodar simulação: ' + error.message);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
 }
 
 function renderSimulationResults() {
   const container = document.getElementById('sim-results-container');
   
   if (currentSimulationResults.length === 0) {
-    container.innerHTML = '<p>Nenhuma sugestão viável encontrada. Tente reduzir as restrições.</p>';
+    container.innerHTML = `
+      <div style="text-align:center; padding:4rem;">
+        <div style="font-size:3rem; margin-bottom:1rem;">⚠️</div>
+        <h4 style="color:var(--text-main)">Nenhuma sugestão viável</h4>
+        <p style="color:var(--text-secondary)">Tente mudar o dia das aulas presenciais ou verificar se há salas suficientes para a capacidade das turmas.</p>
+      </div>
+    `;
     return;
   }
 
   container.innerHTML = currentSimulationResults.map((sim, idx) => `
     <div class="suggestion-card">
       <div class="suggestion-header">
-        <div>
-          <span class="score-badge score-${sim.status}">Score: ${sim.score}</span>
-          <span style="margin-left:1rem; font-weight:700; text-transform:uppercase; font-size:0.8rem;">Sugestão #${idx + 1}</span>
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <span class="score-badge score-${sim.status}">${sim.status.toUpperCase()}</span>
+          <div>
+            <div style="font-weight:900; font-size:1.1rem; color:#1E293B">Score: ${sim.score}</div>
+            <div style="font-size:0.7rem; color:#64748B">OPÇÃO #${idx + 1}</div>
+          </div>
         </div>
-        <button class="btn-primary action-execute" id="btn-open-simulation" onclick="exportSimulation('${sim.id}')" style="padding:0.5rem 1rem; font-size:0.8rem;">
-          Aplicar no Calendário
+        <button class="btn-primary" onclick="exportSimulation('${sim.id}')" style="padding:0.6rem 1.2rem; font-size:0.8rem;">
+          Aplicar Sugestão
         </button>
       </div>
-      <p style="font-size:0.9rem; margin-bottom:1.5rem; color:rgba(255,255,255,0.7)">
+      
+      <p style="font-size:0.95rem; line-height:1.6; margin-bottom:1.5rem; color:#475569; background:#F1F5F9; padding:1.2rem; border-radius:12px; border-left:4px solid var(--primary-blue);">
+        <strong style="color:#1E293B; display:block; margin-bottom:0.4rem; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px;">Por que esta sugestão?</strong>
         ${sim.summary}
-        ${sim.warnings && sim.warnings.length > 0 ? `<br><span style="color:#f59e0b; font-size:0.8rem;">Avisos: ${sim.warnings.join(' ')}</span>` : ''}
       </p>
+
+      <div class="suggestion-points" style="margin-bottom:1.5rem;">
+        ${(sim.reasons || []).map(r => `<div class="point-item"><span class="point-icon icon-plus">✓</span> <span style="color:#475569">${r}</span></div>`).join('')}
+        ${(sim.warnings || []).map(w => `<div class="point-item"><span class="point-icon icon-warn">!</span> <span style="color:#64748B">${w}</span></div>`).join('')}
+      </div>
       
       <div class="allocation-grid">
         ${sim.allocations.map(a => `
-          <div class="allocation-item" style="border-top: ${a.roomSelectionMode==='required'?'2px solid #ef4444':'none'}">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem">
-              <span style="font-weight:800; font-size:0.75rem; color:var(--purple);">
+          <div class="allocation-item" style="border-left: 3px solid ${a.classType === 'presencial' ? 'var(--presencial)' : (a.classType === 'ead' ? 'var(--ead)' : 'var(--reservada)')}; background:#F1F5F9">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem">
+              <span style="font-weight:800; font-size:0.65rem; color:#64748B; text-transform:uppercase; letter-spacing:1px;">
                 ${a.weekday ? WEEKDAYS[a.weekday] : 'Não Alocada'}
               </span>
-              <span style="font-size:0.6rem; opacity:0.5">Aula #${a.lessonNumber}</span>
             </div>
-            <div style="font-size:0.85rem; font-weight:600;">
+            <div style="font-size:0.9rem; font-weight:700; color:#1E293B; margin-bottom:0.2rem">
               ${CLASS_TYPES[a.classType].label}
             </div>
-            <div style="font-size:0.7rem; opacity:0.6">
-              P${a.periods.join(' & P')}
+            <div style="font-size:0.75rem; color:#64748B">
+              ${a.periods.length === 2 ? 'Noite Inteira' : 'Período P' + a.periods[0]}
             </div>
-            ${a.suggestedRoomName ? `<div class="entry-room" style="margin-top:0.5rem; font-weight:700">${a.suggestedRoomName}</div>` : ''}
-            ${a.warnings && a.warnings.length > 0 ? `<div style="color:#f59e0b; font-size:0.65rem; margin-top:0.3rem; line-height:1.2">${a.warnings[0]}</div>` : ''}
-            ${a.conflicts && a.conflicts.length > 0 ? `<div style="color:#ef4444; font-size:0.65rem; margin-top:0.3rem; font-weight:bold">${a.conflicts[0]}</div>` : ''}
+            ${a.suggestedRoomName ? `
+              <div class="entry-room" style="margin-top:0.8rem; background:#ffffff; color:#1E293B; padding:5px 10px; border-radius:8px; font-weight:800; font-size:0.7rem; border:1px solid #E2E8F0">
+                ${a.suggestedRoomName}
+              </div>
+            ` : ''}
           </div>
         `).join('')}
       </div>

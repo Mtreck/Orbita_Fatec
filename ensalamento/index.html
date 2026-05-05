@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Órbita Fatec · Ensalamento</title>
-  <link rel="stylesheet" href="../layout.css">
-  <link rel="stylesheet" href="../layout.css">
+  <link rel="stylesheet" href="../core/layout.css">
+  <link rel="stylesheet" href="../core/layout.css">
   <link rel="stylesheet" href="ensalamento.css">
 </head>
 <body>
@@ -49,7 +49,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 4.21 12 6.81 16.5 4.21"/><polyline points="7.5 19.79 7.5 14.6 3 12"/><polyline points="21 12 16.5 14.6 16.5 19.79"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
               Simular Ensalamento
             </button>
-            <button class="btn-primary action-execute" id="btn-open-manual-entry" style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border);">
+            <button class="btn-primary action-execute" id="btn-open-manual-entry" style="background: white; color: var(--primary-blue); border: 1px solid var(--border-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Lançamento Manual
             </button>
@@ -267,9 +267,9 @@
   <!-- MODAL: LANÇAMENTO MANUAL -->
   <div id="modal-manual-entry" class="modal-overlay">
     <div class="modal-content" style="max-width: 750px; padding: 1.5rem;">
-      <div class="modal-header" style="margin-bottom: 1rem;">
-        <h3 id="entry-modal-title" style="font-size: 1.1rem; letter-spacing: 0.5px;">Lançamento Manual</h3>
-        <button class="modal-close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <div class="modal-header" style="margin-bottom: 2rem;">
+        <h3 id="entry-modal-title" style="font-size: 1.4rem; font-weight: 800; color: white; letter-spacing: -0.5px;">Lançamento Manual</h3>
+        <button class="modal-close"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <form id="form-manual-entry" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem;">
         <input type="hidden" id="entry-id">
@@ -281,7 +281,7 @@
 
         <div class="filter-group" style="grid-column: span 2;">
           <label style="font-size: 0.7rem; margin-bottom: 0.4rem;">TURMAS ENVOLVIDAS</label>
-          <div id="entry-classes-container" class="checkbox-list-container" style="background: rgba(0,0,0,0.2); max-height: 120px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
+          <div id="entry-classes-container" class="checkbox-list-container">
             <p style="color:rgba(255,255,255,0.3); font-size:0.75rem; padding:0.5rem">Selecione um curso...</p>
           </div>
         </div>
@@ -308,11 +308,11 @@
 
         <div class="filter-group" style="grid-column: span 2;">
           <label style="font-size: 0.7rem; margin-bottom: 0.4rem;">PERÍODOS</label>
-          <div style="display:flex; gap:1rem; background:rgba(255,255,255,0.03); padding:0.8rem; border-radius:12px; border:1px solid var(--glass-border);">
-            <label class="checkbox-item" style="padding: 0.3rem; background: transparent; border: none; flex: 1; font-size: 0.8rem;">
+          <div style="display:flex; gap:1rem;">
+            <label class="checkbox-item" style="flex: 1;">
               <input type="checkbox" name="entry-periods" value="1"> P1 (19:30 - 20:40)
             </label>
-            <label class="checkbox-item" style="padding: 0.3rem; background: transparent; border: none; flex: 1; font-size: 0.8rem;">
+            <label class="checkbox-item" style="flex: 1;">
               <input type="checkbox" name="entry-periods" value="2"> P2 (21:00 - 22:30)
             </label>
           </div>
@@ -357,44 +357,69 @@
       </div>
 
       <div id="simulation-step-1">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2rem;">
-          <div class="filter-group">
-            <label>Selecione o Curso</label>
-            <select id="sim-course-id" class="form-select"></select>
-          </div>
-          <div class="filter-group">
-            <label>Selecione as Turmas</label>
-            <div id="sim-classes-container" class="checkbox-list-container">
-              <p style="color:rgba(255,255,255,0.3); font-size:0.8rem; padding:0.5rem">Selecione um curso...</p>
+        <div class="sim-main-grid" style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem; margin-top: 1rem;">
+          
+          <!-- LEFT COL: Config & Lessons -->
+          <div class="sim-config-col">
+            <!-- Contexto e Turmas -->
+            <div style="background:#F8FAFC; padding:1.5rem; border-radius:16px; border:1px solid var(--border-color); margin-bottom:1.5rem;">
+              <h5 style="margin-bottom:1.2rem; font-size:0.8rem; color:var(--text-main); font-weight:800; text-transform:uppercase; letter-spacing:1px;">1. Contexto e Turmas</h5>
+              <div style="display:grid; grid-template-columns: 1fr; gap:1.2rem;">
+                <div class="filter-group">
+                  <label>Curso Destino</label>
+                  <select id="sim-course-id" class="form-select"></select>
+                </div>
+                <div class="filter-group">
+                  <label>Turmas Envolvidas</label>
+                  <div id="sim-classes-container" class="checkbox-list-container" style="max-height:140px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estrutura das Aulas -->
+            <div style="background:#F8FAFC; padding:1.5rem; border-radius:16px; border:1px solid var(--border-color); margin-bottom:1.5rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
+                <h5 style="font-size:0.8rem; color:var(--text-main); font-weight:800; text-transform:uppercase; letter-spacing:1px;">2. Estrutura das Aulas</h5>
+                <div style="display:flex; gap:0.5rem;">
+                   <button class="btn-primary" id="btn-sim-institutional" style="padding:0.5rem 1rem; font-size:0.75rem; background:white; color:var(--primary-blue); border:1px solid var(--border-color); box-shadow:none;">
+                    Padrão Institucional (3+2)
+                  </button>
+                  <button class="btn-primary" id="btn-sim-add-lesson" style="padding:0.5rem 1rem; font-size:0.75rem;">
+                    + Adicionar Aula
+                  </button>
+                </div>
+              </div>
+              
+              <div id="sim-lessons-list" class="lesson-builder-list" style="max-height:450px; overflow-y:auto; padding-right:0.5rem; display:flex; flex-direction:column; gap:1rem;"></div>
             </div>
           </div>
-        </div>
 
-        <div class="filter-group" style="margin-bottom: 1.5rem;">
-          <label>Preferência de Distribuição Semanal</label>
-          <select id="sim-distribution-pref" class="form-select">
-            <option value="concentrada">Concentrada (Aulas presenciais em dias próximos)</option>
-            <option value="distribuida">Distribuída (Aulas presenciais alternadas)</option>
-          </select>
-        </div>
+          <!-- RIGHT COL: Context & Preferences -->
+          <div class="sim-side-col">
+            <!-- Gargalos -->
+            <div id="sim-bottlenecks" style="background:#F8FAFC; padding:1.5rem; border-radius:16px; border:1px solid var(--border-color); margin-bottom:1.5rem;">
+              <!-- Bottlenecks will be injected here -->
+            </div>
 
-        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--glass-border); padding:1.5rem; border-radius:20px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h4 style="margin:0">Lista de Aulas da Semana</h4>
-            <button class="btn-primary" id="btn-sim-add-lesson" style="padding:0.5rem 1rem; font-size:0.8rem;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Adicionar Aula
+            <!-- Preferências -->
+            <div style="background:#F8FAFC; padding:1.5rem; border-radius:16px; border:1px solid var(--border-color); margin-bottom:1.5rem;">
+              <h5 style="margin-bottom:1.2rem; font-size:0.8rem; color:var(--text-main); font-weight:800; text-transform:uppercase; letter-spacing:1px;">3. Preferências</h5>
+              <div class="filter-group">
+                <label>Distribuição Semanal</label>
+                <select id="sim-distribution-pref" class="form-select" style="height:40px; font-size:0.8rem;">
+                  <option value="distribuida" selected>Distribuída (Alternada)</option>
+                  <option value="concentrada">Concentrada (Próxima)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Ação Principal -->
+            <button class="btn-primary" id="btn-run-simulation" style="width:100%; height:60px; font-size:1rem; box-shadow: 0 10px 20px rgba(15, 78, 184, 0.2);">
+              GERAR SIMULAÇÃO
             </button>
-          </div>
-          
-          <div id="sim-lessons-list" class="lesson-builder-list">
-            <!-- Aulas serão adicionadas aqui -->
-          </div>
-
-          <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem; border-top:1px solid var(--glass-border); padding-top:1.5rem;">
-            <button class="btn-primary" id="btn-run-simulation" style="padding:1rem 3rem;">
-              Gerar Simulação Agora
-            </button>
+            <p style="text-align:center; font-size:0.7rem; color:var(--text-secondary); margin-top:1rem; line-height:1.4;">
+              A I.A. processará múltiplas variações para encontrar o melhor cenário.
+            </p>
           </div>
         </div>
       </div>

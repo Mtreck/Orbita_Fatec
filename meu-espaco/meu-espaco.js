@@ -5,10 +5,10 @@ import {
   onSnapshot, query, orderBy, where, deleteDoc, serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-import { firebaseConfig } from "../firebase-config.js";
-import { setupLayout } from "../layout.js";
-import { getRoleConfig } from "../permissions.js";
-import { secureAction, sanitizeHTML } from "../security.js";
+import { firebaseConfig } from "../core/firebase-config.js";
+import { setupLayout } from "../core/layout.js";
+import { getRoleConfig } from "../core/permissions.js";
+import { secureAction, sanitizeHTML, escapeHTML as esc } from "../core/security.js";
 
 const fbApp = initializeApp(firebaseConfig);
 const auth  = getAuth(fbApp);
@@ -29,14 +29,14 @@ onAuthStateChanged(auth, async (user) => {
 
     initApp(user, currentRole);
   } else {
-    window.location.href = '../login.html';
+    window.location.href = '../auth/login.html';
   }
 });
 
 async function initApp(user, role) {
   setupLayout(user, role, 'dashboard', async () => {
     await signOut(auth);
-    window.location.href = '../login.html';
+    window.location.href = '../auth/login.html';
   });
 
   renderWidgets(role);
@@ -409,12 +409,6 @@ function setupEventListeners() {
 window.abrirModal = (id) => document.getElementById(id).classList.add('active');
 window.fecharModal = (id) => document.getElementById(id).classList.remove('active');
 
-function esc(str) {
-  if (!str) return "";
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
 
 async function getDocs(colRef) {
   const { getDocs: getDocsOrig } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js");

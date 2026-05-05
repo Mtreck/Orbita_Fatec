@@ -29,8 +29,9 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-import { firebaseConfig } from "../firebase-config.js";
-import { setupLayout } from "../layout.js";
+import { firebaseConfig } from "../core/firebase-config.js";
+import { setupLayout } from "../core/layout.js";
+import { escapeHTML as esc } from "../core/security.js";
 
 
 const fbApp    = initializeApp(firebaseConfig);
@@ -53,14 +54,12 @@ const userCount    = document.getElementById('user-count');
 const searchInput  = document.getElementById('search-users');
 const userList     = document.getElementById('user-list');
 
-// Função de escape para prevenir XSS
-const esc = (str) => String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
 
 // ================================================================
 //  AUTH GUARD — Só ADM entra
 // ================================================================
 onAuthStateChanged(auth, async (user) => {
-  if (!user) { window.location.href = '/login'; return; }
+  if (!user) { window.location.href = '../auth/login.html'; return; }
 
   currentUser = user;
   const name  = user.displayName || user.email.split('@')[0];
@@ -97,16 +96,15 @@ onAuthStateChanged(auth, async (user) => {
     if (currentRole !== 'adm_l1' && !perms.execute) {
       document.body.classList.add('hide-execute');
     }
-  } catch (err) { 
-    console.error("Erro auth guard:", err);
-    authGuard.classList.remove('hidden');
-    return;
-  }
+    } catch (err) { 
+      authGuard.classList.remove('hidden');
+      return;
+    }
 
   // Inicializar o novo Layout
   setupLayout(user, currentRole, 'usuarios', async () => {
     await signOut(auth);
-    window.location.href = '/login.html';
+    window.location.href = '../auth/login.html';
   });
 
   mainContent.classList.remove('hidden');
@@ -696,7 +694,16 @@ async function enviarResetSenha() {
   btn.disabled = true; btn.textContent = 'Enviando...';
 
   try {
-    await sendPasswordResetEmail(auth, email);
+    auth.languageCode = 'pt-br'; // Forçar idioma para Português
+    
+    // Configurações para redirecionar para nossa tela customizada
+    const actionCodeSettings = {
+      // Usando o link oficial para evitar erros de domínio não autorizado
+      url: 'https://orbita-fatecivp.web.app/auth/redefinir-senha.html',
+      handleCodeInApp: true,
+    };
+
+    await sendPasswordResetEmail(auth, email, actionCodeSettings);
     showToast(`✅ Link de redefinição enviado para ${email}`, 'success');
   } catch (err) {
     showToast(`❌ Erro: ${err.message}`, 'error');

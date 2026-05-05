@@ -9,8 +9,9 @@ import {
   getFirestore, collection, doc, setDoc, getDocs, onSnapshot, getDoc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-import { firebaseConfig } from "../firebase-config.js";
-import { setupLayout } from "../layout.js";
+import { firebaseConfig } from "../core/firebase-config.js";
+import { setupLayout } from "../core/layout.js";
+import { escapeHTML as esc } from "../core/security.js";
 
 const fbApp  = initializeApp(firebaseConfig);
 const analytics = getAnalytics(fbApp);
@@ -18,8 +19,6 @@ const auth   = getAuth(fbApp);
 const db     = getFirestore(fbApp);
 const colRef = collection(db, "notebooks");
 
-// Função de escape para prevenir XSS
-const esc = (str) => String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
 
 // ---- Constants ----
 const SALAS = [
@@ -67,7 +66,7 @@ onAuthStateChanged(auth, async (user) => {
         };
       }
     } else {
-      if (!isMovimentar) window.location.href = '/';
+      if (!isMovimentar) window.location.href = '../meu-espaco/index.html';
     }
     return;
   }
@@ -102,7 +101,7 @@ onAuthStateChanged(auth, async (user) => {
       perms = allPerms[role]?.emprestimo || { view: false, execute: false };
     }
   } catch (err) {
-    console.error("Erro ao buscar permissões globais:", err);
+    // Falha silenciosa para segurança
   }
 
   if (roleBadge) {
@@ -118,7 +117,7 @@ onAuthStateChanged(auth, async (user) => {
 
   // Verifica se pode VER o módulo
   if (role !== 'adm_l1' && !perms.view) {
-    window.location.href = '/';
+    window.location.href = '../meu-espaco/index.html';
     return;
   }
 
@@ -133,7 +132,7 @@ onAuthStateChanged(auth, async (user) => {
   
   setupLayout(user, role, 'emprestimo', async () => {
     await signOut(auth);
-    window.location.href = '/login.html';
+    window.location.href = '../auth/login.html';
   });
 
   await loadNotebooks();

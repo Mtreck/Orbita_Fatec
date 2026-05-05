@@ -140,6 +140,47 @@ body {
   flex-shrink: 0;
 }
 
+.layout-nav-category {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94A3B8; /* Brighter color for better contrast */
+  text-transform: uppercase;
+  letter-spacing: 2px; /* Increased spacing */
+  padding: 1.8rem 1rem 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.layout-nav-category:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.category-chevron {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.7; /* Increased opacity */
+}
+
+.layout-nav-category.collapsed .category-chevron {
+  transform: rotate(-90deg);
+}
+
+.layout-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.layout-nav-group.collapsed {
+  display: none;
+}
+
 /* Main Content Area */
 .layout-main {
   flex: 1;

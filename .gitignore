@@ -71,4 +71,4 @@ node_modules/
 firebase-debug.log
 firebase-debug.*.log
 .firebase/
-firebase-config.js
+core/firebase-config.js
