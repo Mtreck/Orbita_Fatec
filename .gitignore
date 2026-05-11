@@ -71,7 +71,6 @@ node_modules/
 firebase-debug.log
 firebase-debug.*.log
 .firebase/
-core/firebase-config.js
 serviceAccountKey.json
 
 
