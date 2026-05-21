@@ -9,7 +9,7 @@ O Órbita FATEC é um ecossistema de gestão institucional desenvolvido para a F
   - `firestore.rules`: Regras de segurança rigorosas trancando todo o acesso client-side.
 - `/api`: Servidor Backend em Node.js (Express) hospedado no Vercel. Contém a lógica de autenticação via Firebase Admin SDK (`firebase.js`) e as rotas para os módulos (`/rotas`).
 - `/core`: Arquivos compartilhados da arquitetura do Front-end (Firebase Auth, layout, segurança).
-- `/emprestimo`, `/usuarios`, `/ensalamento`, `/rh/carga-horaria`, `/meu-espaco`: Módulos independentes do sistema consumindo a API REST através da função `apiFetch`.
+- `/emprestimo`, `/usuarios`, `/ensalamento`, `/rh/carga-horaria`, `/rh/funcionarios`, `/empresas`, `/valida`, `/meu-espaco`: Módulos independentes do sistema consumindo a API REST através da função `apiFetch` (ou endpoint público).
 - `/regras`: Documentação técnica e logs de alteração.
 
 ## 3. Fluxo de autenticação e Arquitetura REST
@@ -53,6 +53,18 @@ O sistema utiliza Role-Based Access Control (RBAC). Os cargos base definidos em 
 - **Frontend Adapter**: O Front-end não reescreveu a lógica pesada de datas. Usou-se um "Mock Adapter" que intercepta comandos do Firestore local e os transforma em chamadas REST para `/api/carga-horaria`.
 - **Backend API**: `/api/rotas/carga-horaria.js`.
 
+### Funcionários
+- **Finalidade**: Gestão de cadastro, status ativo/inativo e turnos/horários de colaboradores (RH).
+- **Backend API**: `/api/rotas/carga-horaria.js` (Lida com coleção `funcionarios_rh`).
+
+### Parceiros (Empresas)
+- **Finalidade**: Cadastro e manutenção das empresas parceiras do Clube de Vantagens e descontos concedidos aos funcionários.
+- **Backend API**: `/api/rotas/empresas.js` (Lida com coleção `empresas`).
+
+### Validação do Cartão (Valida)
+- **Finalidade**: Interface pública para validação de cartões de identificação / QR Code de funcionários.
+- **Backend API**: `/api/rotas/validacao.js` (Lida com rota pública `/api/validacao/:uid`).
+
 ## 6. Padrão visual
 O sistema segue uma identidade visual institucional "Light Theme" moderna:
 - **Cores Principais**:
@@ -80,6 +92,25 @@ Sempre que um arquivo for criado, alterado ou removido, registrar aqui seguindo 
 - Como reverter:
 
 ## 8. Histórico de alterações
+
+### [2026-05-20] Criação do Clube de Vantagens (Parceiros) e Refatoração de RH
+- **Autor**: Equipe de Desenvolvimento
+- **Branch**: main
+- **Arquivos criados/alterados**:
+  - `/empresas/index.html`, `/empresas/app.js`, `/empresas/empresas.css` (Módulo de Parceiros)
+  - `/rh/funcionarios/index.html`, `/rh/funcionarios/app.js`, `/rh/funcionarios/funcionarios.css` (Módulo de Funcionários)
+  - `/rh/carga-horaria/index.html`, `/rh/carga-horaria/carga-horaria.js`, `/rh/carga-horaria/carga-horaria.css` (Módulo de Carga Horária refatorado)
+  - `/valida/index.html` (Módulo de validação pública)
+  - `/api/rotas/empresas.js`, `/api/rotas/app-keys.js`, `/api/rotas/validacao.js`, `/api/index.js` (Novas rotas da API)
+  - `/core/permissions.js` (Novos módulos cadastrados)
+- **Tipo**: Criação e Refatoração
+- **Motivo**: Lançamento do projeto de Cartão Fidelidade para funcionários em app React Native (Expo), exigindo cadastro de empresas parceiras, separação da gestão de funcionários/turnos e validação pública de QR Codes.
+- **Impacto**: O módulo antigo de Carga Horária do RH foi dividido em 2 submódulos dedicados. Foi criada a infraestrutura de chaves de aplicativo (`app_keys`) e a validação pública de status de funcionários por UID.
+- **Como testar**:
+  - Acessar o novo módulo "Parceiros" e criar/editar/excluir lojistas.
+  - Acessar o módulo "Funcionários" sob Recursos Humanos e cadastrar turnos para um colaborador.
+  - Testar a validação acessando `/valida/index.html?uid=<UID_DO_FUNCIONARIO>` e certificar-se de que exibe o status de ativo/inativo corretamente.
+- **Como reverter**: Reverter os novos módulos nos arquivos de rota da API, limpar a lista de módulos no `permissions.js` e excluir as pastas `/empresas`, `/rh/funcionarios` e `/valida`.
 
 ### [2026-05-11] Conclusão da Migração Client-Server (REST API)
 - **Autor**: Antigravity
