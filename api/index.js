@@ -5,18 +5,37 @@ require('dotenv').config();
 const app = express();
 
 // Middlewares globais
+// Origens permitidas: apenas o painel web oficial e ambiente de desenvolvimento local.
+// Apps nativos (APK Android/iOS) ignoram CORS completamente — não são impactados.
+const ALLOWED_ORIGINS = [
+    'https://orbita-fatecivp.web.app',       // Firebase Hosting (produção)
+    'https://orbita-fatecivp.firebaseapp.com', // Firebase Hosting (alternativo)
+    'https://orbita-fatec-ti.vercel.app',     // Vercel (produção)
+    'http://localhost:3000',                  // Desenvolvimento local (backend)
+    'http://127.0.0.1:3000',                  // Desenvolvimento local (backend)
+    'http://localhost:8081',                  // Expo Web (desenvolvimento)
+];
+
 const corsOptions = {
-    origin: '*',
+    origin: (origin, callback) => {
+        // Permite requisições sem origin (Postman, APK nativo, curl, etc.)
+        if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS: Origem não autorizada — ${origin}`));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 
-// Responder a todos os preflights OPTIONS explicitamente
+// Responder a preflights OPTIONS explicitamente
 app.options('*', cors(corsOptions));
 
 app.use(express.json());
+
 
 
 // Rota de Teste para garantir que a API está no ar
