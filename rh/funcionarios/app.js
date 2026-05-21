@@ -92,7 +92,6 @@ const onSnapshot = (path, callback) => {
 };
 
 // ---- Estado global ----
-let currentUser     = null;
 let allFuncionarios = [];
 let editingFuncId   = null;
 
