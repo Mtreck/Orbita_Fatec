@@ -368,7 +368,7 @@ async function salvarFuncionario(e) {
   e.preventDefault();
   const nome    = document.getElementById('func-nome').value.trim();
   const cargo   = document.getElementById('func-cargo').value.trim();
-  const email   = document.getElementById('func-email').value.trim();
+  const email   = document.getElementById('func-email').value.trim().toLowerCase();
   const nascimento = document.getElementById('func-nascimento').value;
   const errEl   = document.getElementById('func-form-error');
   const btnText = document.getElementById('func-btn-text');

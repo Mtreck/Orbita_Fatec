@@ -17,6 +17,24 @@ router.get('/me', verifyToken, async (req, res) => {
     }
 });
 
+// PUT /api/usuarios/me/senha - Permite ao próprio usuário redefinir sua senha no Firebase Auth
+router.put('/me/senha', verifyToken, async (req, res) => {
+    try {
+        const { senha, password } = req.body;
+        const novaSenha = senha || password;
+
+        if (!novaSenha || novaSenha.trim().length < 6) {
+            return res.status(400).json({ error: 'A senha deve conter pelo menos 6 caracteres.' });
+        }
+
+        // Atualiza a senha no Firebase Auth utilizando o Admin SDK
+        await auth.updateUser(req.user.uid, { password: novaSenha.trim() });
+        res.json({ success: true, message: 'Senha atualizada com sucesso!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // GET /api/usuarios
 router.get('/', verifyToken, async (req, res) => {
     try {
