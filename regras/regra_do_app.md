@@ -93,6 +93,18 @@ Sempre que um arquivo for criado, alterado ou removido, registrar aqui seguindo 
 
 ## 8. Histórico de alterações
 
+### [2026-05-21] Correção de Bloqueio e Fallback de Usuários (App Móvel)
+- Autor: Antigravity
+- Branch: main
+- Arquivos alterados/criados:
+  - `/api/rotas/usuarios.js` (Adicionado fallback no endpoint `GET /me` se o documento no Firestore for inexistente)
+  - Banco de Dados Firestore (Atualização em lote para definir `ativo: true` para usuários legados e criação de documento para o e-mail secundário do desenvolvedor)
+- Tipo: Correção de Bug e API backend
+- Motivo: Resolver o problema em que usuários existentes sem o campo `ativo` (ou novos usuários não sincronizados no Firestore) ficavam bloqueados na tela de login exibindo avisos de inatividade.
+- Impacto: Garante que todos os usuários ativos do Firebase Auth consigam fazer login com sucesso, assumindo `ativo: true` por padrão e preenchendo as informações básicas na tela do aplicativo.
+- Como testar: Realizar login no aplicativo móvel com contas cujos campos `ativo` estavam ausentes ou inexistentes no Firestore.
+- Como reverter: Remover o fallback da rota `/me` no backend e desfazer as atualizações de banco de dados.
+
 ### [2026-05-21] Rota de Alteração de Senha do Próprio Usuário (App Móvel)
 - Autor: Antigravity
 - Branch: main
