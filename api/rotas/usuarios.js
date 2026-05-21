@@ -11,7 +11,14 @@ const verifyToken = require('../middlewares/auth');
 router.get('/me', verifyToken, async (req, res) => {
     try {
         const snap = await db.collection('users').doc(req.user.uid).get();
-        res.json(snap.exists ? { uid: snap.id, ...snap.data() } : { role: 'visitante' });
+        res.json(snap.exists ? { uid: snap.id, ...snap.data() } : { 
+            uid: req.user.uid,
+            name: req.user.name || 'Visitante',
+            email: req.user.email || '',
+            role: 'visitante',
+            ativo: true,
+            nascimento: ''
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
