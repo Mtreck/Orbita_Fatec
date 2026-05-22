@@ -9,7 +9,7 @@ O Órbita FATEC é um ecossistema de gestão institucional desenvolvido para a F
   - `firestore.rules`: Regras de segurança rigorosas trancando todo o acesso client-side.
 - `/api`: Servidor Backend em Node.js (Express) hospedado no Vercel. Contém a lógica de autenticação via Firebase Admin SDK (`firebase.js`) e as rotas para os módulos (`/rotas`).
 - `/core`: Arquivos compartilhados da arquitetura do Front-end (Firebase Auth, layout, segurança).
-- `/emprestimo`, `/usuarios`, `/ensalamento`, `/rh/carga-horaria`, `/rh/funcionarios`, `/empresas`, `/valida`, `/meu-espaco`: Módulos independentes do sistema consumindo a API REST através da função `apiFetch` (ou endpoint público).
+- `/emprestimo`, `/usuarios`, `/ensalamento`, `/rh/carga-horaria`, `/rh/funcionarios`, `/empresas`, `/valida`, `/meu-espaco`, `/fidelidade`: Módulos independentes do sistema consumindo a API REST através da função `apiFetch` (ou endpoint público).
 - `/regras`: Documentação técnica e logs de alteração.
 
 ## 3. Fluxo de autenticação e Arquitetura REST
@@ -65,6 +65,10 @@ O sistema utiliza Role-Based Access Control (RBAC). Os cargos base definidos em 
 - **Finalidade**: Interface pública para validação de cartões de identificação / QR Code de funcionários.
 - **Backend API**: `/api/rotas/validacao.js` (Lida com rota pública `/api/validacao/:uid`).
 
+### FATEC Fidelidade (PWA)
+- **Finalidade**: Módulo mobile-first (PWA) que disponibiliza a carteirinha digital do funcionário (FATEC Card) com QR Code auto-regenerativo a cada 30 segundos e acesso rápido às empresas parceiras conveniadas no Clube de Vantagens.
+- **Estrutura**: Localizado em `/fidelidade`, inclui a página do usuário (`index.html`) e a interface de validação (`validar.html`) para lojistas verificarem o status e vigência em tempo real.
+
 ## 6. Padrão visual
 O sistema segue uma identidade visual institucional "Light Theme" moderna:
 - **Cores Principais**:
@@ -93,7 +97,18 @@ Sempre que um arquivo for criado, alterado ou removido, registrar aqui seguindo 
 
 ## 8. Histórico de alterações
 
-### [2026-05-21] Correção de Bloqueio e Fallback de Usuários (App Móvel)
+### [2026-05-22] Ajuste de CORS para Desenvolvimento Local (PWA Fidelidade / Multi-porta)
+- Autor: Antigravity
+- Branch: main
+- Arquivos alterados:
+  - `/api/index.js` (Ajustado regex do CORS para aceitar qualquer porta em localhost/127.0.0.1)
+- Tipo: Ajuste de Infraestrutura / Desenvolvimento
+- Motivo: Evitar bloqueio por CORS ao testar o PWA Fidelidade ou outros módulos locais quando a porta do servidor local varia.
+- Impacto: Permite que desenvolvedores façam requisições locais para a API do Vercel a partir de qualquer porta local.
+- Como testar: Rodar o PWA localmente e verificar se as chamadas de rede à API ocorrem sem erros de CORS.
+- Como reverter: Reverter o regex do CORS no arquivo `/api/index.js`.
+
+### [2026-05-21] Correção de Bloqueio e Fallback de Usuários (PWA Fidelidade)
 - Autor: Antigravity
 - Branch: main
 - Arquivos alterados/criados:
@@ -101,18 +116,18 @@ Sempre que um arquivo for criado, alterado ou removido, registrar aqui seguindo 
   - Banco de Dados Firestore (Atualização em lote para definir `ativo: true` para usuários legados e criação de documento para o e-mail secundário do desenvolvedor)
 - Tipo: Correção de Bug e API backend
 - Motivo: Resolver o problema em que usuários existentes sem o campo `ativo` (ou novos usuários não sincronizados no Firestore) ficavam bloqueados na tela de login exibindo avisos de inatividade.
-- Impacto: Garante que todos os usuários ativos do Firebase Auth consigam fazer login com sucesso, assumindo `ativo: true` por padrão e preenchendo as informações básicas na tela do aplicativo.
-- Como testar: Realizar login no aplicativo móvel com contas cujos campos `ativo` estavam ausentes ou inexistentes no Firestore.
+- Impacto: Garante que todos os usuários ativos do Firebase Auth consigam fazer login com sucesso, assumindo `ativo: true` por padrão e preenchendo as informações básicas na tela do PWA.
+- Como testar: Realizar login no PWA com contas cujos campos `ativo` estavam ausentes ou inexistentes no Firestore.
 - Como reverter: Remover o fallback da rota `/me` no backend e desfazer as atualizações de banco de dados.
 
-### [2026-05-21] Rota de Alteração de Senha do Próprio Usuário (App Móvel)
+### [2026-05-21] Rota de Alteração de Senha do Próprio Usuário (PWA Fidelidade)
 - Autor: Antigravity
 - Branch: main
 - Arquivos alterados:
   - `/api/rotas/usuarios.js` (Criação da rota `PUT /me/senha`)
   - `/api/middlewares/auth.js` (Ajustado middleware para permitir que usuários não adm acessem rotas `/me/*`)
 - Tipo: Segurança e API backend
-- Motivo: Permitir que os funcionários cadastrados possam redefinir suas próprias senhas de forma segura diretamente através do app móvel.
+- Motivo: Permitir que os funcionários cadastrados possam redefinir suas próprias senhas de forma segura diretamente através do PWA Fidelidade.
 - Impacto: Funcionários não-administradores agora podem atualizar suas senhas via API utilizando seu Token ID do Firebase sem comprometer o isolamento de dados do painel web.
 - Como testar: Enviar uma requisição HTTP `PUT /api/usuarios/me/senha` com um token JWT válido de usuário não administrador.
 - Como reverter: Excluir a rota `PUT /me/senha` de `/api/rotas/usuarios.js` e desfazer a alteração no middleware `/api/middlewares/auth.js`.
@@ -144,11 +159,10 @@ Sempre que um arquivo for criado, alterado ou removido, registrar aqui seguindo 
   - `/rh/funcionarios/index.html`, `/rh/funcionarios/app.js`, `/rh/funcionarios/funcionarios.css` (Módulo de Funcionários)
   - `/rh/carga-horaria/index.html`, `/rh/carga-horaria/carga-horaria.js`, `/rh/carga-horaria/carga-horaria.css` (Módulo de Carga Horária refatorado)
   - `/valida/index.html` (Módulo de validação pública)
-  - `/api/rotas/empresas.js`, `/api/rotas/app-keys.js`, `/api/rotas/validacao.js`, `/api/index.js` (Novas rotas da API)
-  - `/core/permissions.js` (Novos módulos cadastrados)
+  - `/api/rotas/empresas.js`, `/api/rotas/validacao.js`, `/api/index.js` (Novas rotas da API)
 - **Tipo**: Criação e Refatoração
-- **Motivo**: Lançamento do projeto de Cartão Fidelidade para funcionários em app React Native (Expo), exigindo cadastro de empresas parceiras, separação da gestão de funcionários/turnos e validação pública de QR Codes.
-- **Impacto**: O módulo antigo de Carga Horária do RH foi dividido em 2 submódulos dedicados. Foi criada a infraestrutura de chaves de aplicativo (`app_keys`) e a validação pública de status de funcionários por UID.
+- **Motivo**: Lançamento do projeto de Cartão Fidelidade para funcionários via PWA Fidelidade, exigindo cadastro de empresas parceiras, separação da gestão de funcionários/turnos e validação pública de QR Codes.
+- **Impacto**: O módulo antigo de Carga Horária do RH foi dividido em 2 submódulos dedicados e a validação pública de status de funcionários por UID foi implementada.
 - **Como testar**:
   - Acessar o novo módulo "Parceiros" e criar/editar/excluir lojistas.
   - Acessar o módulo "Funcionários" sob Recursos Humanos e cadastrar turnos para um colaborador.
@@ -346,6 +360,26 @@ Sempre que um arquivo for criado, alterado ou removido, registrar aqui seguindo 
   - Logue como ADM N1.
   - Acesse o módulo Usuários. Crie um novo cargo. Altere as permissões globais. Crie um novo usuário.
   - Verifique se as chamadas de rede vão para `/api/usuarios`.
+
+### [2026-05-22] Fase 3: Criação do Módulo FATEC Fidelidade Web (PWA)
+- Autor: Antigravity
+- Branch: main (fidelidade-pwa)
+- Arquivos criados:
+  - `fidelidade/index.html` (Interface PWA, carteirinha e clube de vantagens mobile-first)
+  - `fidelidade/fidelidade.css` (Visual premium dark gradient e glassmorphism para a carteirinha)
+  - `fidelidade/fidelidade.js` (Autenticação, busca de perfil, QR Code dinâmico, lista de parceiros, busca e banner de atalho PWA)
+- Arquivos alterados:
+  - `core/permissions.js` (Módulo cadastrado e atribuído a todos os cargos)
+  - `auth/login.js` (Redirecionamento automático pós-login via parâmetro `?redirect=`)
+  - `regras/regra_do_app.md` (Documentação e histórico de alterações)
+- Tipo: Nova Funcionalidade (PWA Mobile-first).
+- Motivo: Substituir o aplicativo nativo em Expo por um PWA totalmente responsivo integrado ao Órbita, permitindo que usuários do iOS (iPhone) e Android acessem a carteirinha e parceiros adicionando um atalho na tela inicial do celular, sem precisar de compilação ou download de APKs.
+- Impacto: Acesso rápido, seguro e dinâmico ao cartão de fidelidade com QR Code auto-regenerativo a cada 30 segundos, integrado diretamente ao controle de status de usuários do Órbita.
+- Como testar:
+  - Abra o navegador e acesse `/fidelidade/index.html`.
+  - Se deslogado, deve redirecionar para `/auth/login.html?redirect=/fidelidade/index.html`.
+  - Após o login, deve exibir a carteirinha digital com QR Code atualizando a cada 30 segundos e a lista de parceiros credenciados na seção "Clube de Vantagens".
+  - Simule o acesso em modo PWA standalone ou utilize o banner de instalação no celular para fixar o atalho.
 
 ## 9. Diretrizes de Deploy no Vercel (Zero Config)
 

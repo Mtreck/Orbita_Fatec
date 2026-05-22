@@ -7,7 +7,7 @@ const verifyToken = require('../middlewares/auth');
 // ROTAS CUSTOMIZADAS (Para evitar conflito com /:colName)
 // ==========================================
 
-router.get('/custom/calendarEntries', verifyToken, async (req, res) => {
+router.get('/custom/calendarEntries', verifyToken, verifyToken.requireModulePermission('ensalamento'), async (req, res) => {
     try {
         let q = db.collection('calendarEntries').where('active', '==', true);
         
@@ -25,7 +25,7 @@ router.get('/custom/calendarEntries', verifyToken, async (req, res) => {
     }
 });
 
-router.post('/custom/checkConflict', verifyToken, async (req, res) => {
+router.post('/custom/checkConflict', verifyToken, verifyToken.requireModulePermission('ensalamento'), async (req, res) => {
     try {
         const { weekday, periods, roomId, classId, excludeId } = req.body;
         
@@ -63,7 +63,7 @@ router.post('/custom/checkConflict', verifyToken, async (req, res) => {
 // ==========================================
 const ALLOWED_COLS = ['courses', 'classes', 'rooms', 'calendarEntries'];
 
-router.get('/:colName', verifyToken, async (req, res) => {
+router.get('/:colName', verifyToken, verifyToken.requireModulePermission('ensalamento'), async (req, res) => {
     try {
         const { colName } = req.params;
         if (!ALLOWED_COLS.includes(colName)) return res.status(403).json({error: 'Coleção não permitida'});
@@ -84,7 +84,7 @@ router.get('/:colName', verifyToken, async (req, res) => {
     }
 });
 
-router.get('/:colName/:id', verifyToken, async (req, res) => {
+router.get('/:colName/:id', verifyToken, verifyToken.requireModulePermission('ensalamento'), async (req, res) => {
     try {
         const { colName, id } = req.params;
         if (!ALLOWED_COLS.includes(colName)) return res.status(403).json({error: 'Coleção não permitida'});
@@ -94,7 +94,7 @@ router.get('/:colName/:id', verifyToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/:colName', verifyToken, async (req, res) => {
+router.post('/:colName', verifyToken, verifyToken.requireModulePermission('ensalamento'), async (req, res) => {
     try {
         const { colName } = req.params;
         if (!ALLOWED_COLS.includes(colName)) return res.status(403).json({error: 'Coleção não permitida'});
@@ -110,7 +110,7 @@ router.post('/:colName', verifyToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.put('/:colName/:id', verifyToken, async (req, res) => {
+router.put('/:colName/:id', verifyToken, verifyToken.requireModulePermission('ensalamento'), async (req, res) => {
     try {
         const { colName, id } = req.params;
         if (!ALLOWED_COLS.includes(colName)) return res.status(403).json({error: 'Coleção não permitida'});
@@ -124,7 +124,7 @@ router.put('/:colName/:id', verifyToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.delete('/:colName/:id', verifyToken, async (req, res) => {
+router.delete('/:colName/:id', verifyToken, verifyToken.requireModulePermission('ensalamento'), async (req, res) => {
     try {
         const { colName, id } = req.params;
         if (!ALLOWED_COLS.includes(colName)) return res.status(403).json({error: 'Coleção não permitida'});

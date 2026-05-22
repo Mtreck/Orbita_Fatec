@@ -18,6 +18,9 @@ router.get('/', verifyToken, async (req, res) => {
 // POST /api/empresas
 router.post('/', verifyToken, async (req, res) => {
     try {
+        if (req.user.role !== 'adm_l1' && req.user.role !== 'adm_l2') {
+            return res.status(403).json({ error: 'Acesso Negado. Apenas administradores podem gerenciar parceiros.' });
+        }
         const { nome, descricao, localizacao, desconto, categoria } = req.body;
         const newDoc = db.collection('empresas').doc();
         await newDoc.set({
@@ -37,6 +40,9 @@ router.post('/', verifyToken, async (req, res) => {
 // PUT /api/empresas/:id
 router.put('/:id', verifyToken, async (req, res) => {
     try {
+        if (req.user.role !== 'adm_l1' && req.user.role !== 'adm_l2') {
+            return res.status(403).json({ error: 'Acesso Negado. Apenas administradores podem gerenciar parceiros.' });
+        }
         const { nome, descricao, localizacao, desconto, categoria } = req.body;
         await db.collection('empresas').doc(req.params.id).update({
             nome,
@@ -54,6 +60,9 @@ router.put('/:id', verifyToken, async (req, res) => {
 // DELETE /api/empresas/:id
 router.delete('/:id', verifyToken, async (req, res) => {
     try {
+        if (req.user.role !== 'adm_l1' && req.user.role !== 'adm_l2') {
+            return res.status(403).json({ error: 'Acesso Negado. Apenas administradores podem gerenciar parceiros.' });
+        }
         await db.collection('empresas').doc(req.params.id).delete();
         res.json({ message: 'Empresa removida com sucesso!' });
     } catch (err) {

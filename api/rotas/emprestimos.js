@@ -4,7 +4,7 @@ const { db } = require('../firebase');
 const verifyToken = require('../middlewares/auth');
 
 // GET /api/emprestimos - Retorna todos os notebooks
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', verifyToken, verifyToken.requireModulePermission('emprestimo'), async (req, res) => {
     try {
         const snapshot = await db.collection('notebooks').get();
         const notebooks = [];
@@ -22,7 +22,7 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // GET /api/emprestimos/:id - Retorna um notebook específico
-router.get('/:id', verifyToken, async (req, res) => {
+router.get('/:id', verifyToken, verifyToken.requireModulePermission('emprestimo'), async (req, res) => {
     try {
         const docRef = await db.collection('notebooks').doc(req.params.id).get();
         if (!docRef.exists) {
@@ -35,7 +35,7 @@ router.get('/:id', verifyToken, async (req, res) => {
 });
 
 // PUT /api/emprestimos/:id - Atualiza ou cria o registro
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', verifyToken, verifyToken.requireModulePermission('emprestimo'), async (req, res) => {
     try {
         const id = req.params.id;
         const data = req.body;

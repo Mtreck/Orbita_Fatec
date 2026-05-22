@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Verificar Cartão FATEC — Órbita</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="fidelidade.css">
+  
+  <!-- Fontes do Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Estilos específicos da validação */
+    .validation-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    
+    .status-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4), 
+                  inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .status-icon-wrapper {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+    
+    .status-icon-wrapper::after {
+      content: '';
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+      animation: spin 10s linear infinite;
+    }
+
+    /* Valid state */
+    .state-valid {
+      background: rgba(16, 185, 129, 0.15);
+      border: 2px solid rgba(16, 185, 129, 0.4);
+      color: #10b981;
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.25);
+    }
+    
+    /* Invalid state */
+    .state-invalid {
+      background: rgba(239, 68, 68, 0.15);
+      border: 2px solid rgba(239, 68, 68, 0.4);
+      color: #ef4444;
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.25);
+    }
+
+    /* Warning / Expired state */
+    .state-expired {
+      background: rgba(249, 115, 22, 0.15);
+      border: 2px solid rgba(249, 115, 22, 0.4);
+      color: #f97316;
+      box-shadow: 0 0 30px rgba(249, 115, 22, 0.25);
+    }
+
+    .result-badge {
+      font-size: 0.95rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 0.4rem 1.2rem;
+      border-radius: 50px;
+      letter-spacing: 1px;
+    }
+
+    .result-badge.badge-valid {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .result-badge.badge-invalid {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .result-badge.badge-expired {
+      background: rgba(249, 115, 22, 0.2);
+      color: #fb923c;
+      border: 1px solid rgba(249, 115, 22, 0.4);
+    }
+
+    .employee-info {
+      width: 100%;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 1.2rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      text-align: left;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .info-val {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .verification-time {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .btn-action-primary {
+      width: 100%;
+      background: var(--primary);
+      color: #ffffff;
+      border: 1px solid var(--secondary);
+      padding: 0.85rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    .btn-action-primary:hover {
+      background: var(--secondary);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body style="background: var(--bg-dark); background-image: var(--bg-gradient); background-attachment: fixed; min-height: 100vh;">
+
+  <div class="validation-container">
+    <div class="status-card">
+      
+      <!-- Logo minimalista -->
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <span style="font-family: var(--font-title); font-weight: 800; font-size: 1.2rem; color: #ffffff;">ÓRBITA</span>
+        <span style="font-family: var(--font-title); font-weight: 600; font-size: 0.85rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">Convênios</span>
+      </div>
+
+      <!-- Ícone Animado -->
+      <div id="status-icon" class="status-icon-wrapper state-expired">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+
+      <!-- Badge de Status -->
+      <div id="status-badge" class="result-badge badge-expired">Carregando...</div>
+
+      <!-- Mensagem amigável -->
+      <div id="status-message" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary); padding: 0 0.5rem;">
+        Verificando a autenticidade e o status do funcionário no Órbita FATEC...
+      </div>
+
+      <!-- Info do Funcionário -->
+      <div id="employee-info" class="employee-info" style="display: none;">
+        <div class="info-row">
+          <span class="info-label">Nome</span>
+          <span id="info-name" class="info-val">--</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Cargo</span>
+          <span id="info-role" class="info-val">--</span>
+        </div>
+      </div>
+
+      <!-- Rodapé de auditoria -->
+      <div class="verification-time">
+        <span id="info-time">Verificando...</span>
+      </div>
+
+      <button onclick="window.location.reload()" class="btn-action-primary">Revalidar</button>
+      
+    </div>
+  </div>
+
+  <script type="module">
+    import { getRoleConfig } from "../core/permissions.js";
+
+    // Helper para escapar HTML
+    function esc(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    const API_BASE = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.')) 
+      ? `http://${window.location.hostname}:3000/api` 
+      : '/api';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const uid = urlParams.get('u');
+    const timestampStr = urlParams.get('t');
+
+    const iconEl = document.getElementById('status-icon');
+    const badgeEl = document.getElementById('status-badge');
+    const messageEl = document.getElementById('status-message');
+    const infoContainer = document.getElementById('employee-info');
+    const nameEl = document.getElementById('info-name');
+    const roleEl = document.getElementById('info-role');
+    const timeEl = document.getElementById('info-time');
+
+    function setExpiredState() {
+      iconEl.className = 'status-icon-wrapper state-expired';
+      iconEl.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+      badgeEl.className = 'result-badge badge-expired';
+      badgeEl.textContent = 'Código Expirado';
+      messageEl.textContent = 'Este QR Code expirou. Peça para o funcionário recarregar ou abrir a carteirinha digital no celular dele para gerar um novo código válido.';
+      infoContainer.style.display = 'none';
+      timeEl.textContent = 'Validação inválida';
+    }
+
+    function setInvalidState(msg = 'Funcionário não ativo ou não encontrado.') {
+      iconEl.className = 'status-icon-wrapper state-invalid';
+      iconEl.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+      badgeEl.className = 'result-badge badge-invalid';
+      badgeEl.textContent = 'Cartão Inválido';
+      messageEl.textContent = msg;
+      infoContainer.style.display = 'none';
+      timeEl.textContent = 'Acesso negado';
+    }
+
+    function setValidState(name, roleLabel) {
+      iconEl.className = 'status-icon-wrapper state-valid';
+      iconEl.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
+      badgeEl.className = 'result-badge badge-valid';
+      badgeEl.textContent = 'Cartão Válido';
+      messageEl.textContent = 'Funcionário devidamente identificado e ATIVO. Desconto e benefícios autorizados!';
+      
+      nameEl.textContent = esc(name);
+      roleEl.textContent = esc(roleLabel);
+      infoContainer.style.display = 'flex';
+      
+      const now = new Date();
+      timeEl.innerHTML = `Verificado em: <strong>${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR')}</strong>`;
+    }
+
+    async function validate() {
+      if (!uid || !timestampStr) {
+        setInvalidState('Parâmetros de leitura inválidos. Tente escanear o QR Code novamente.');
+        return;
+      }
+
+      // Validação de expiração (120 segundos)
+      const qrTime = parseInt(timestampStr, 10);
+      const nowTime = Math.floor(Date.now() / 1000);
+      if (isNaN(qrTime) || nowTime - qrTime > 120) {
+        setExpiredState();
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/validacao/${uid}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setInvalidState(err.message || 'Funcionário inativo ou não cadastrado no Órbita FATEC.');
+          return;
+        }
+
+        const data = await res.json();
+        if (data.valid) {
+          const roleConfig = getRoleConfig(data.role || 'visitante');
+          setValidState(data.name, roleConfig.label);
+        } else {
+          setInvalidState(data.message || 'Acesso suspenso ou inválido.');
+        }
+      } catch (err) {
+        console.error(err);
+        setInvalidState('Erro de conexão com o servidor do Órbita FATEC. Tente novamente.');
+      }
+    }
+
+    validate();
+  </script>
+</body>
+</html>

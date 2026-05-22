@@ -13,9 +13,12 @@ const loginPassword = document.getElementById('login-password');
 const loginError    = document.getElementById('login-error');
 const loginBtnText  = document.getElementById('login-btn-text');
 
-// Se já estiver logado, vai direto pro Hub
+const urlParams = new URLSearchParams(window.location.search);
+const redirectUrl = urlParams.get('redirect') || '/meu-espaco/index.html';
+
+// Se já estiver logado, vai direto pro Hub ou URL de redirecionamento
 onAuthStateChanged(auth, (user) => {
-  if (user) window.location.href = '/meu-espaco/index.html';
+  if (user) window.location.href = redirectUrl;
 });
 
 loginForm.addEventListener('submit', async (e) => {
@@ -25,7 +28,7 @@ loginForm.addEventListener('submit', async (e) => {
 
   try {
     await signInWithEmailAndPassword(auth, loginEmail.value.trim(), loginPassword.value);
-    window.location.href = '/meu-espaco/index.html';
+    window.location.href = redirectUrl;
   } catch (err) {
     console.error("Login Error:", err);
     loginError.style.display = 'block';

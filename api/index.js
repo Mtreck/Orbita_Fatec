@@ -6,20 +6,20 @@ const app = express();
 
 // Middlewares globais
 // Origens permitidas: apenas o painel web oficial e ambiente de desenvolvimento local.
-// Apps nativos (APK Android/iOS) ignoram CORS completamente — não são impactados.
 const ALLOWED_ORIGINS = [
     'https://orbita-fatecivp.web.app',       // Firebase Hosting (produção)
     'https://orbita-fatecivp.firebaseapp.com', // Firebase Hosting (alternativo)
     'https://orbita-fatec-ti.vercel.app',     // Vercel (produção)
     'http://localhost:3000',                  // Desenvolvimento local (backend)
     'http://127.0.0.1:3000',                  // Desenvolvimento local (backend)
-    'http://localhost:8081',                  // Expo Web (desenvolvimento)
 ];
 
 const corsOptions = {
     origin: (origin, callback) => {
         // Permite requisições sem origin (Postman, APK nativo, curl, etc.)
-        if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+        // E permite qualquer porta no localhost/127.0.0.1 para desenvolvimento local
+        const isLocalhost = origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+        if (!origin || ALLOWED_ORIGINS.includes(origin) || isLocalhost) {
             callback(null, true);
         } else {
             callback(new Error(`CORS: Origem não autorizada — ${origin}`));
@@ -32,7 +32,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Responder a preflights OPTIONS explicitamente
-app.options('*', cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 app.use(express.json());
 
@@ -51,7 +51,6 @@ const rotasMeuEspaco = require('./rotas/meu-espaco');
 const rotasCargaHoraria = require('./rotas/carga-horaria');
 const rotasEmpresas = require('./rotas/empresas');
 const rotasValidacao = require('./rotas/validacao');
-const rotasAppKeys = require('./rotas/app-keys');
 
 app.use('/api/emprestimos', rotasEmprestimo);
 app.use('/api/usuarios', rotasUsuarios);
@@ -60,7 +59,6 @@ app.use('/api/meu-espaco', rotasMeuEspaco);
 app.use('/api/carga-horaria', rotasCargaHoraria);
 app.use('/api/empresas', rotasEmpresas);
 app.use('/api/validacao', rotasValidacao);
-app.use('/api/app-keys', rotasAppKeys);
 
 // Exportação obrigatória para o Vercel Serverless
 

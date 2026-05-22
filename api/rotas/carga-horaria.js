@@ -5,7 +5,7 @@ const verifyToken = require('../middlewares/auth');
 
 const ALLOWED_COLS = ['funcionarios_rh', 'eventos_rh', 'registros_carga_horaria'];
 
-router.get('/:colName', verifyToken, async (req, res) => {
+router.get('/:colName', verifyToken, verifyToken.requireModulePermission('carga-horaria'), async (req, res) => {
     try {
         const { colName } = req.params;
         if (!ALLOWED_COLS.includes(colName)) return res.status(403).json({error: 'Coleção não permitida'});
@@ -32,7 +32,7 @@ router.get('/:colName', verifyToken, async (req, res) => {
     }
 });
 
-router.get('/:colName/:id', verifyToken, async (req, res) => {
+router.get('/:colName/:id', verifyToken, verifyToken.requireModulePermission('carga-horaria'), async (req, res) => {
     try {
         const { colName, id } = req.params;
         if (!ALLOWED_COLS.includes(colName)) return res.status(403).json({error: 'Coleção não permitida'});
@@ -41,7 +41,7 @@ router.get('/:colName/:id', verifyToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/:colName', verifyToken, async (req, res) => {
+router.post('/:colName', verifyToken, verifyToken.requireModulePermission('carga-horaria'), async (req, res) => {
     try {
         const { colName } = req.params;
         if (!ALLOWED_COLS.includes(colName)) return res.status(403).json({error: 'Coleção não permitida'});
@@ -58,7 +58,7 @@ router.post('/:colName', verifyToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.put('/:colName/:id', verifyToken, async (req, res) => {
+router.put('/:colName/:id', verifyToken, verifyToken.requireModulePermission('carga-horaria'), async (req, res) => {
     try {
         const { colName, id } = req.params;
         if (!ALLOWED_COLS.includes(colName)) return res.status(403).json({error: 'Coleção não permitida'});
@@ -71,7 +71,7 @@ router.put('/:colName/:id', verifyToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.delete('/:colName/:id', verifyToken, async (req, res) => {
+router.delete('/:colName/:id', verifyToken, verifyToken.requireModulePermission('carga-horaria'), async (req, res) => {
     try {
         const { colName, id } = req.params;
         if (!ALLOWED_COLS.includes(colName)) return res.status(403).json({error: 'Coleção não permitida'});

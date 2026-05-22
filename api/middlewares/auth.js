@@ -1,5 +1,12 @@
 const { auth } = require('../firebase');
 
+// Cache em memória para as permissões do banco para evitar custos de leitura repetitiva
+let permissionsCache = {
+    data: null,
+    lastFetched: 0
+};
+const CACHE_TTL = 60 * 1000; // 1 minuto de TTL
+
 const verifyToken = async (req, res, next) => {
     const bearerHeader = req.headers['authorization'];
 
@@ -31,4 +38,90 @@ const verifyToken = async (req, res, next) => {
     }
 };
 
+// Middleware para verificar permissões de módulos específicos
+const requireModulePermission = (moduleName) => {
+    return async (req, res, next) => {
+        if (!req.user || !req.user.role) {
+            return res.status(401).json({ error: 'Acesso negado. Informações do usuário não encontradas.' });
+        }
+
+        const role = req.user.role;
+
+        // ADM N1 sempre possui acesso irrestrito
+        if (role === 'adm_l1') {
+            return next();
+        }
+
+        const requiredAction = req.method === 'GET' ? 'view' : 'execute';
+
+        // Tentar buscar as permissões do cache ou Firestore
+        let perms = null;
+        const now = Date.now();
+        if (permissionsCache.data && (now - permissionsCache.lastFetched) < CACHE_TTL) {
+            perms = permissionsCache.data;
+        } else {
+            try {
+                const { db } = require('../firebase');
+                const snap = await db.collection('config').doc('permissions').get();
+                if (snap.exists) {
+                    perms = snap.data();
+                    permissionsCache.data = perms;
+                    permissionsCache.lastFetched = now;
+                }
+            } catch (err) {
+                console.error('Erro ao ler permissões dinâmicas do Firestore:', err);
+            }
+        }
+
+        // Se encontrou as permissões no banco e estão configuradas para o cargo
+        if (perms && perms[role] && perms[role][moduleName]) {
+            const hasAccess = perms[role][moduleName][requiredAction];
+            if (hasAccess) {
+                return next();
+            }
+            return res.status(403).json({ error: `Acesso Negado. Seu cargo (${role}) não possui privilégios de ${requiredAction === 'view' ? 'visualização' : 'execução'} para o módulo ${moduleName}.` });
+        }
+
+        // Fallback de segurança para permissões padrão
+        const defaultPermissions = {
+            adm_l2: {
+                emprestimo: { view: true, execute: true },
+                usuarios: { view: true, execute: true },
+                ensalamento: { view: true, execute: true },
+                'carga-horaria': { view: true, execute: true }
+            },
+            ti: {
+                emprestimo: { view: true, execute: true },
+                usuarios: { view: false, execute: false },
+                ensalamento: { view: true, execute: true },
+                'carga-horaria': { view: false, execute: false }
+            },
+            rh: {
+                emprestimo: { view: false, execute: false },
+                usuarios: { view: false, execute: false },
+                ensalamento: { view: false, execute: false },
+                'carga-horaria': { view: true, execute: true }
+            },
+            visitante: {
+                emprestimo: { view: true, execute: false },
+                usuarios: { view: false, execute: false },
+                ensalamento: { view: true, execute: false },
+                'carga-horaria': { view: false, execute: false }
+            }
+        };
+
+        const roleDefault = defaultPermissions[role] || defaultPermissions['visitante'];
+        const hasAccess = roleDefault[moduleName] && roleDefault[moduleName][requiredAction];
+
+        if (hasAccess) {
+            return next();
+        }
+
+        return res.status(403).json({ error: `Acesso Negado. Seu cargo (${role}) não possui permissão para acessar este módulo.` });
+    };
+};
+
+verifyToken.requireModulePermission = requireModulePermission;
+
 module.exports = verifyToken;
+

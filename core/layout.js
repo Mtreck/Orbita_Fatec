@@ -28,6 +28,18 @@ export function setupLayout(user, role, activeModuleId, onLogout) {
   `;
   sidebar.appendChild(sidebarHeader);
 
+  // Perfil de Usuário para Mobile na Sidebar (oculto no desktop)
+  const sidebarUser = document.createElement('div');
+  sidebarUser.className = 'layout-sidebar-user-mobile';
+  sidebarUser.innerHTML = `
+    <div class="layout-user-avatar">${initial}</div>
+    <div class="layout-user-details-mobile">
+      <span class="layout-user-name">${name}</span>
+      <span class="layout-user-role">${roleConfig.label}</span>
+    </div>
+  `;
+  sidebar.appendChild(sidebarUser);
+
   const nav = document.createElement('nav');
   nav.className = 'layout-nav';
   
@@ -93,13 +105,37 @@ export function setupLayout(user, role, activeModuleId, onLogout) {
   
   sidebar.appendChild(nav);
 
+  // Criar Footer com botão de logout na Sidebar para Mobile (oculto no desktop)
+  const sidebarFooter = document.createElement('div');
+  sidebarFooter.className = 'layout-sidebar-footer-mobile';
+  sidebarFooter.innerHTML = `
+    <button class="layout-sidebar-logout-btn-mobile" id="layout-sidebar-logout-btn-mobile">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      <span>Sair do Órbita</span>
+    </button>
+  `;
+  sidebar.appendChild(sidebarFooter);
+
   // Criar Header
   const header = document.createElement('header');
   header.className = 'layout-header';
   const activeMod = MODULES[activeModuleId];
   header.innerHTML = `
-    <div class="layout-header-title">
-      ${activeMod ? activeMod.title : 'Dashboard'}
+    <div class="layout-header-left">
+      <button class="layout-sidebar-toggle" id="layout-sidebar-toggle" aria-label="Abrir menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div class="layout-header-title">
+        ${activeMod ? activeMod.title : 'Dashboard'}
+      </div>
     </div>
     <div class="layout-header-actions">
       <span class="layout-user-role">${roleConfig.label}</span>
@@ -117,6 +153,10 @@ export function setupLayout(user, role, activeModuleId, onLogout) {
     </div>
   `;
 
+  // Criar Overlay para mobile
+  const overlay = document.createElement('div');
+  overlay.className = 'layout-sidebar-overlay';
+
   // Injetar no DOM
   const wrapper = document.querySelector('.layout-wrapper');
   if (wrapper) {
@@ -126,17 +166,55 @@ export function setupLayout(user, role, activeModuleId, onLogout) {
     const existingHeader = wrapper.querySelector('.layout-header');
     if (existingHeader) existingHeader.remove();
 
+    const existingOverlay = wrapper.querySelector('.layout-sidebar-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
     wrapper.insertBefore(sidebar, wrapper.firstChild);
+    wrapper.appendChild(overlay);
     const main = wrapper.querySelector('.layout-main');
     if (main) {
       main.insertBefore(header, main.firstChild);
     }
   }
 
+  // Toggle Sidebar Mobile
+  const toggleBtn = document.getElementById('layout-sidebar-toggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.add('open');
+      overlay.classList.add('active');
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+    });
+  }
+
+  // Fechar sidebar ao clicar em um link do menu no mobile
+  const navItems = sidebar.querySelectorAll('.layout-nav-item');
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+    });
+  });
+
   // Evento de Logout
   const logoutBtn = document.getElementById('layout-logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
+      clearCachedAuth();
+      if (onLogout) onLogout();
+    });
+  }
+
+  // Evento de Logout Mobile
+  const logoutBtnMobile = document.getElementById('layout-sidebar-logout-btn-mobile');
+  if (logoutBtnMobile) {
+    logoutBtnMobile.addEventListener('click', () => {
       clearCachedAuth();
       if (onLogout) onLogout();
     });

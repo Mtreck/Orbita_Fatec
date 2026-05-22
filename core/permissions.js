@@ -11,6 +11,12 @@ export const MODULES = {
     icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
     url: "/meu-espaco/index.html"
   },
+  fidelidade: {
+    id: "fidelidade",
+    title: "Cartão FATEC",
+    icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>`,
+    url: "/fidelidade/index.html"
+  },
   emprestimo: {
     id: "emprestimo",
     category: "ti",
@@ -58,23 +64,23 @@ export const MODULES = {
 export const ROLE_PERMISSIONS = {
   adm_l1: {
     label: "ADM N1",
-    modules: ["dashboard", "emprestimo", "usuarios", "ensalamento", "carga-horaria", "funcionarios", "empresas"]
+    modules: ["dashboard", "fidelidade", "emprestimo", "usuarios", "ensalamento", "carga-horaria", "funcionarios", "empresas"]
   },
   adm_l2: {
     label: "ADM N2",
-    modules: ["dashboard", "emprestimo", "usuarios", "ensalamento", "carga-horaria", "funcionarios", "empresas"]
+    modules: ["dashboard", "fidelidade", "emprestimo", "usuarios", "ensalamento", "carga-horaria", "funcionarios", "empresas"]
   },
   ti: {
     label: "T.I.",
-    modules: ["dashboard", "emprestimo", "usuarios"]
+    modules: ["dashboard", "fidelidade", "emprestimo", "usuarios"]
   },
   rh: {
     label: "RH",
-    modules: ["dashboard", "carga-horaria", "funcionarios"]
+    modules: ["dashboard", "fidelidade", "carga-horaria", "funcionarios"]
   },
   visitante: {
     label: "Visitante",
-    modules: ["dashboard"]
+    modules: ["dashboard", "fidelidade"]
   }
 };
 
