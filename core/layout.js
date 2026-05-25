@@ -1,7 +1,28 @@
 import { MODULES, CATEGORIES, getRoleConfig, hasPermission } from './permissions.js';
 
 export function setupLayout(user, role, activeModuleId, onLogout) {
-  // Validar permissão (se não for o dashboard ou visitante)
+  // Carregar permissões dinâmicas salvas em cache no localStorage
+  const cachedPermsRaw = localStorage.getItem('orbita_permissions');
+  let cachedPerms = null;
+  if (cachedPermsRaw) {
+    try {
+      cachedPerms = JSON.parse(cachedPermsRaw);
+    } catch (e) {}
+  }
+
+  // Redireciona imediatamente se o módulo de visualização foi desativado dinamicamente para o cargo do usuário
+  if (role !== 'adm_l1' && activeModuleId !== 'dashboard' && activeModuleId !== 'fidelidade' && cachedPerms) {
+    const rawPerm = cachedPerms[activeModuleId];
+    const userLevel = (rawPerm !== undefined && typeof rawPerm === 'object')
+      ? (rawPerm.execute ? 3 : (rawPerm.view ? 2 : 1))
+      : (parseInt(rawPerm) || 1);
+    if (userLevel < 2) {
+      window.location.href = '/meu-espaco/index.html';
+      return;
+    }
+  }
+
+  // Validar permissão estática base
   if (activeModuleId !== 'dashboard' && !hasPermission(role, activeModuleId)) {
     window.location.href = '/index.html';
     return;
@@ -44,9 +65,21 @@ export function setupLayout(user, role, activeModuleId, onLogout) {
   nav.className = 'layout-nav';
   
   // 1. Renderizar Módulos sem Categoria (Top-level)
-  const topLevelModules = Object.values(MODULES).filter(mod => 
-    !mod.category && roleConfig.modules.includes(mod.id)
-  );
+  const topLevelModules = Object.values(MODULES).filter(mod => {
+    if (!mod.category && roleConfig.modules.includes(mod.id)) {
+      if (role === 'adm_l1') return true;
+      if (mod.id === 'dashboard' || mod.id === 'fidelidade') return true;
+      if (cachedPerms) {
+        const rawPerm = cachedPerms[mod.id];
+        const userLevel = (rawPerm !== undefined && typeof rawPerm === 'object')
+          ? (rawPerm.execute ? 3 : (rawPerm.view ? 2 : 1))
+          : (parseInt(rawPerm) || 1);
+        if (userLevel < 2) return false;
+      }
+      return true;
+    }
+    return false;
+  });
 
   topLevelModules.forEach(mod => {
     const link = document.createElement('a');
@@ -59,9 +92,21 @@ export function setupLayout(user, role, activeModuleId, onLogout) {
   // 2. Renderizar por Categorias
   Object.entries(CATEGORIES).forEach(([catKey, catLabel]) => {
     // Filtrar módulos desta categoria que o usuário tem permissão
-    const permittedInCat = Object.values(MODULES).filter(mod => 
-      mod.category === catKey && roleConfig.modules.includes(mod.id)
-    );
+    const permittedInCat = Object.values(MODULES).filter(mod => {
+      if (mod.category === catKey && roleConfig.modules.includes(mod.id)) {
+        if (role === 'adm_l1') return true;
+        if (mod.id === 'dashboard' || mod.id === 'fidelidade') return true;
+        if (cachedPerms) {
+          const rawPerm = cachedPerms[mod.id];
+          const userLevel = (rawPerm !== undefined && typeof rawPerm === 'object')
+            ? (rawPerm.execute ? 3 : (rawPerm.view ? 2 : 1))
+            : (parseInt(rawPerm) || 1);
+          if (userLevel < 2) return false;
+        }
+        return true;
+      }
+      return false;
+    });
 
     if (permittedInCat.length > 0) {
       const catWrapper = document.createElement('div');
@@ -218,6 +263,38 @@ export function setupLayout(user, role, activeModuleId, onLogout) {
       clearCachedAuth();
       if (onLogout) onLogout();
     });
+  }
+
+  // Atualizar permissões em segundo plano e cachear
+  const token = localStorage.getItem('orbita_token');
+  if (token && role !== 'adm_l1') {
+    const API_BASE = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.')) 
+      ? `http://${window.location.hostname}:3000/api` 
+      : '/api';
+
+    fetch(`${API_BASE}/usuarios/config/permissions`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => {
+      if (res.ok) return res.json();
+      throw new Error();
+    })
+    .then(allPerms => {
+      const rolePerms = allPerms[role] || {};
+      localStorage.setItem('orbita_permissions', JSON.stringify(rolePerms));
+      
+      // Se as permissões mudaram e a visualização do módulo ativo atual foi desativada, redireciona
+      if (activeModuleId !== 'dashboard' && activeModuleId !== 'fidelidade') {
+        const rawPerm = rolePerms[activeModuleId];
+        const userLevel = (rawPerm !== undefined && typeof rawPerm === 'object')
+          ? (rawPerm.execute ? 3 : (rawPerm.view ? 2 : 1))
+          : (parseInt(rawPerm) || 1);
+        if (userLevel < 2) {
+          window.location.href = '/meu-espaco/index.html';
+        }
+      }
+    })
+    .catch(() => {});
   }
 
   // Remover auth-guard e mostrar app

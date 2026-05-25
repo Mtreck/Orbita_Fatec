@@ -97,6 +97,19 @@ Sempre que um arquivo for criado, alterado ou removido, registrar aqui seguindo 
 
 ## 8. Histórico de alterações
 
+### [2026-05-25] Validação e Filtragem Dinâmica de Permissões (RBAC / Sidebar e Ações)
+- Autor: Antigravity
+- Branch: main
+- Arquivos alterados:
+  - `/core/layout.js` (Implementada checagem das permissões dinâmicas no layout, ocultação de itens da sidebar e background refresh periódico)
+  - `/core/layout.css` (Adicionada a regra global `.hide-execute .action-execute` para ocultar botões de escrita)
+  - `/meu-espaco/meu-espaco.js` (Widget cards filtrados dinamicamente com base nas permissões reais do banco)
+- Tipo: Refatoração de Segurança e Controle de Acesso
+- Motivo: Fazer com que o menu lateral (sidebar) e os widgets do painel ocultem imediatamente os módulos para os quais o cargo do usuário não tem permissão de visualização ("ver"). Além disso, corrigir a ocultação de botões de escrita/ação (`action-execute`) caso a permissão "executar" seja falsa.
+- Impacto: Interface limpa e totalmente integrada às decisões de permissão dos ADMs N1/N2 em tempo real, sem expor links e telas temporárias não autorizadas.
+- Como testar: Logar como ADM N1. Em "Gerenciar Acesso", remover o "ver" de um módulo (ex: Empréstimos) para o cargo T.I. Logar como T.I. e verificar se o menu de Empréstimos e o widget correspondente no Meu Espaço desapareceram. Tentar acessar o link direto da página e verificar o redirecionamento imediato. Alterar "executar" para false e verificar se os botões de ação somem.
+- Como reverter: Desfazer as alterações nos arquivos `/core/layout.js`, `/core/layout.css` e `/meu-espaco/meu-espaco.js`.
+
 ### [2026-05-25] Ajuste de Nome de Marca e Tempo de Expiração do QR Code (Fidelidade PWA)
 - Autor: Antigravity
 - Branch: main

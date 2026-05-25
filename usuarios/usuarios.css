@@ -1364,3 +1364,15 @@ body {
 .switch .slider.round:before {
   border-radius: 50%;
 }
+
+/* Disable switch interaction when execution is not allowed */
+.hide-execute .switch {
+  pointer-events: none !important;
+  opacity: 0.5;
+}
+
+/* Disable permission levels selection when execution is not allowed */
+.hide-execute .perm-level-select {
+  pointer-events: none !important;
+  opacity: 0.75;
+}

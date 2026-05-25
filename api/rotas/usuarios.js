@@ -43,7 +43,7 @@ router.put('/me/senha', verifyToken, async (req, res) => {
 });
 
 // GET /api/usuarios
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', verifyToken, verifyToken.requireModulePermission('usuarios'), async (req, res) => {
     try {
         const snap = await db.collection('users').get();
         const users = [];
@@ -55,7 +55,7 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // POST /api/usuarios - Cria no Firebase Auth e no Firestore
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', verifyToken, verifyToken.requireModulePermission('usuarios'), async (req, res) => {
     try {
         const { nome, email, senha, role } = req.body;
         
@@ -85,7 +85,7 @@ router.post('/', verifyToken, async (req, res) => {
 });
 
 // PUT /api/usuarios/:uid/role
-router.put('/:uid/role', verifyToken, async (req, res) => {
+router.put('/:uid/role', verifyToken, verifyToken.requireModulePermission('usuarios'), async (req, res) => {
     try {
         const { role } = req.body;
         await db.collection('users').doc(req.params.uid).update({ role });
@@ -96,7 +96,7 @@ router.put('/:uid/role', verifyToken, async (req, res) => {
 });
 
 // PUT /api/usuarios/:uid/status
-router.put('/:uid/status', verifyToken, async (req, res) => {
+router.put('/:uid/status', verifyToken, verifyToken.requireModulePermission('usuarios'), async (req, res) => {
     try {
         const { ativo } = req.body;
         await db.collection('users').doc(req.params.uid).update({ ativo });
@@ -107,7 +107,7 @@ router.put('/:uid/status', verifyToken, async (req, res) => {
 });
 
 // DELETE /api/usuarios/:uid
-router.delete('/:uid', verifyToken, async (req, res) => {
+router.delete('/:uid', verifyToken, verifyToken.requireModulePermission('usuarios'), async (req, res) => {
     try {
         // Deleta do Firestore
         await db.collection('users').doc(req.params.uid).delete();
@@ -123,7 +123,7 @@ router.delete('/:uid', verifyToken, async (req, res) => {
 // CARGOS (roles)
 // ==========================================
 
-router.get('/roles', verifyToken, async (req, res) => {
+router.get('/roles', verifyToken, verifyToken.requireModulePermission('usuarios'), async (req, res) => {
     try {
         const snap = await db.collection('roles').get();
         const roles = [];
@@ -132,7 +132,7 @@ router.get('/roles', verifyToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.post('/roles', verifyToken, async (req, res) => {
+router.post('/roles', verifyToken, verifyToken.requireModulePermission('usuarios'), async (req, res) => {
     try {
         const { id, name } = req.body;
         const docRef = db.collection('roles').doc(id);
@@ -143,7 +143,7 @@ router.post('/roles', verifyToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.delete('/roles/:id', verifyToken, async (req, res) => {
+router.delete('/roles/:id', verifyToken, verifyToken.requireModulePermission('usuarios'), async (req, res) => {
     try {
         await db.collection('roles').doc(req.params.id).delete();
         res.json({ message: 'Cargo removido.' });
@@ -161,7 +161,7 @@ router.get('/config/permissions', verifyToken, async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.put('/config/permissions', verifyToken, async (req, res) => {
+router.put('/config/permissions', verifyToken, verifyToken.requireModulePermission('usuarios'), async (req, res) => {
     try {
         await db.collection('config').doc('permissions').set(req.body);
         res.json({ message: 'Permissões atualizadas com sucesso!' });

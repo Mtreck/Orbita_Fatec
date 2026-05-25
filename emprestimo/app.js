@@ -156,10 +156,13 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   // Buscar Permissões Globais via API
-  let perms = { view: false, execute: false };
+  let userLevel = 1;
   try {
     const allPerms = await apiFetch('/usuarios/config/permissions');
-    perms = allPerms[role]?.emprestimo || { view: false, execute: false };
+    const rawPerm = allPerms[role]?.emprestimo;
+    userLevel = (rawPerm !== undefined && typeof rawPerm === 'object')
+      ? (rawPerm.execute ? 3 : (rawPerm.view ? 2 : 1))
+      : (parseInt(rawPerm) || 1);
   } catch (err) {
     // Falha silenciosa para segurança
   }
@@ -167,14 +170,14 @@ onAuthStateChanged(auth, async (user) => {
   const token = await user.getIdToken();
   setCachedAuth(user, role, token);
 
-  // Verifica se pode VER o módulo
-  if (role !== 'adm_l1' && !perms.view) {
+  // Verifica se pode VER o módulo (nível >= 2)
+  if (role !== 'adm_l1' && userLevel < 2) {
     window.location.href = '../meu-espaco/index.html';
     return;
   }
 
-  // Se não puder EXECUTAR, esconde botões globais
-  if (role !== 'adm_l1' && !perms.execute) {
+  // Se não puder EXECUTAR (nível >= 3), esconde botões globais
+  if (role !== 'adm_l1' && userLevel < 3) {
     document.body.classList.add('hide-execute');
   } else {
     document.body.classList.remove('hide-execute');

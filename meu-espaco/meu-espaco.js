@@ -99,18 +99,37 @@ async function renderWidgets(role) {
   const filterEl = document.getElementById('widget-filter');
   if (filterEl) filterEl.value = 'all';
   
+  let dynamicPerms = null;
+  if (role !== 'adm_l1') {
+    try {
+      dynamicPerms = await apiFetch('/usuarios/config/permissions');
+    } catch(e) {}
+  }
+  
   const roleConfig = getRoleConfig(role);
   const modules = roleConfig.modules;
 
+  // Helper para validar visualização baseada no banco dinâmico
+  const canView = (modId) => {
+    if (role === 'adm_l1') return true;
+    if (dynamicPerms && dynamicPerms[role] && dynamicPerms[role][modId] !== undefined) {
+      const rawPerm = dynamicPerms[role][modId];
+      const userLevel = (rawPerm !== undefined && typeof rawPerm === 'object')
+        ? (rawPerm.execute ? 3 : (rawPerm.view ? 2 : 1))
+        : (parseInt(rawPerm) || 1);
+      return userLevel >= 2;
+    }
+    return true; // Fallback se falhar
+  };
+
   // Widget Empréstimos
-  if (modules.includes('emprestimo')) {
+  if (modules.includes('emprestimo') && canView('emprestimo')) {
     const card = createWidgetCard('📦', 'Empréstimos Ativos', '0', 'emprestimo');
     container.appendChild(card);
-    // TODO: Buscar contagem real na coleção 'items' onde status == 'Cedido'
   }
 
   // Widget Usuários
-  if (modules.includes('usuarios') && (role === 'adm_l1' || role === 'adm_l2')) {
+  if (modules.includes('usuarios') && (role === 'adm_l1' || role === 'adm_l2') && canView('usuarios')) {
     const card = createWidgetCard('👥', 'Usuários Ativos', '...', 'usuarios');
     container.appendChild(card);
     try {
@@ -120,14 +139,13 @@ async function renderWidgets(role) {
   }
 
   // Widget Ensalamento
-  if (modules.includes('ensalamento')) {
+  if (modules.includes('ensalamento') && canView('ensalamento')) {
     const card = createWidgetCard('🏫', 'Salas em Uso', '0', 'ensalamento');
     container.appendChild(card);
-    // TODO: Buscar contagem real na coleção 'ensalamento'
   }
 
   // Widget Carga Horária
-  if (modules.includes('carga-horaria')) {
+  if (modules.includes('carga-horaria') && canView('carga-horaria')) {
     const card = createWidgetCard('⏰', 'Eventos do Mês', '0', 'carga-horaria');
     container.appendChild(card);
   }

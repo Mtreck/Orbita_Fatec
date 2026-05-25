@@ -67,12 +67,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Buscar Permissões Globais
-      let perms = { view: false, execute: false };
+      let userLevel = 1;
       try {
         const permSnap = await fb.getDoc(fb.doc(fb.db, 'config', 'permissions'));
         if (permSnap.exists()) {
           const allPerms = permSnap.data();
-          perms = allPerms[role]?.ensalamento || { view: false, execute: false };
+          const rawPerm = allPerms[role]?.ensalamento;
+          userLevel = (rawPerm !== undefined && typeof rawPerm === 'object')
+            ? (rawPerm.execute ? 3 : (rawPerm.view ? 2 : 1))
+            : (parseInt(rawPerm) || 1);
         }
       } catch (err) {
         // Falha silenciosa para segurança
@@ -81,14 +84,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const token = await user.getIdToken();
       setCachedAuth(user, role, token);
 
-      // ADM L1 entra direto. Outros precisam de 'view'.
-      if (role !== 'adm_l1' && !perms.view) {
+      // ADM L1 entra direto. Outros precisam de 'view' (nível >= 2).
+      if (role !== 'adm_l1' && userLevel < 2) {
         window.location.href = '../meu-espaco/index.html';
         return;
       }
 
-      // Se não puder executar, esconde botões
-      if (role !== 'adm_l1' && !perms.execute) {
+      // Se não puder executar (nível >= 3), esconde botões
+      if (role !== 'adm_l1' && userLevel < 3) {
         document.body.classList.add('hide-execute');
       } else {
         document.body.classList.remove('hide-execute');
@@ -302,7 +305,7 @@ function renderOccupancyTable(container, entries, courseFilter) {
               <div style="font-weight:900; letter-spacing:0.5px">${esc(course.name)}</div>
               <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); margin-top:0.2rem">${turmasNames}</div>
             </div>
-            <button class="btn-icon" style="color:#ef4444; opacity:0.3; padding:4px" onclick="deleteEntryGroup('${entryIds}')">
+            <button class="btn-icon action-execute" style="color:#ef4444; opacity:0.3; padding:4px" onclick="deleteEntryGroup('${entryIds}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </div>
@@ -427,10 +430,10 @@ function renderCourses() {
         <span class="badge" style="background:rgba(255,255,255,0.1)">${esc(course.code)}</span>
       </div>
       <div class="card-actions">
-        <button class="btn-icon" onclick="editCourse('${course.id}')">
+        <button class="btn-icon action-execute" onclick="editCourse('${course.id}')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
-        <button class="btn-icon" style="color:#ef4444" onclick="toggleActive('courses', '${course.id}', true)">
+        <button class="btn-icon action-execute" style="color:#ef4444" onclick="toggleActive('courses', '${course.id}', true)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         </button>
       </div>
@@ -655,7 +658,21 @@ function openManualEntryModal(entry = null) {
   const modal = document.getElementById('modal-manual-entry');
   document.getElementById('entry-modal-title').textContent = entry ? 'Editar Lançamento' : 'Lançamento Manual';
   document.getElementById('entry-id').value = entry ? entry.id : '';
-  document.getElementById('btn-delete-entry').style.display = entry ? 'block' : 'none';
+
+  const isReadOnly = document.body.classList.contains('hide-execute');
+  const form = document.getElementById('form-manual-entry');
+  
+  form.querySelectorAll('input, select, textarea').forEach(el => {
+    el.disabled = isReadOnly;
+  });
+
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.style.display = isReadOnly ? 'none' : 'block';
+
+  const deleteBtn = document.getElementById('btn-delete-entry');
+  if (deleteBtn) {
+    deleteBtn.style.display = (entry && !isReadOnly) ? 'block' : 'none';
+  }
 
   if (entry) {
     document.getElementById('entry-course-id').value = entry.courseId;
@@ -666,6 +683,7 @@ function openManualEntryModal(entry = null) {
     setTimeout(() => {
       document.querySelectorAll('#entry-classes-container input[name="selected-classes"]').forEach(cb => {
         cb.checked = classIds.includes(cb.value);
+        if (isReadOnly) cb.disabled = true;
       });
     }, 100);
 

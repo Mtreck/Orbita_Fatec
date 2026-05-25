@@ -25,15 +25,6 @@ const verifyToken = async (req, res, next) => {
         const userDoc = await db.collection('users').doc(req.user.uid).get();
         req.user.role = userDoc.exists ? userDoc.data().role : 'visitante';
         
-        // Se for um endpoint perigoso de /usuarios e não for ADM, bloqueia na hora!
-        // AVISO: Liberar /usuarios/me e GET /usuarios/config/permissions para que usuários possam buscar suas credenciais e permissões.
-        const isSelfInfo = req.path.startsWith('/me');
-        const isGetPermissions = req.path.startsWith('/config/permissions') && req.method === 'GET';
-
-        if (req.baseUrl.includes('/usuarios') && !isSelfInfo && !isGetPermissions && req.user.role !== 'adm_l1' && req.user.role !== 'adm_l2') {
-             return res.status(403).json({ error: 'Acesso Negado. Você não tem privilégios de Administrador.' });
-        }
-
         next();
     } catch (error) {
         console.error('Erro ao verificar o token:', error);
@@ -55,7 +46,8 @@ const requireModulePermission = (moduleName) => {
             return next();
         }
 
-        const requiredAction = req.method === 'GET' ? 'view' : 'execute';
+        // GET requer nível >= 2 (visualização), outros métodos requerem nível >= 3 (execução)
+        const requiredLevel = req.method === 'GET' ? 2 : 3;
 
         // Tentar buscar as permissões do cache ou Firestore
         let perms = null;
@@ -76,51 +68,64 @@ const requireModulePermission = (moduleName) => {
             }
         }
 
+        // Função auxiliar para obter o nível de acesso normalizado com retrocompatibilidade
+        const getAccessLevel = (perm) => {
+            if (perm === undefined || perm === null) return 1;
+            if (typeof perm === 'object') {
+                if (perm.execute) return 3;
+                if (perm.view) return 2;
+                return 1;
+            }
+            return parseInt(perm) || 1;
+        };
+
         // Se encontrou as permissões no banco e estão configuradas para o cargo
-        if (perms && perms[role] && perms[role][moduleName]) {
-            const hasAccess = perms[role][moduleName][requiredAction];
-            if (hasAccess) {
+        if (perms && perms[role] && perms[role][moduleName] !== undefined) {
+            const userLevel = getAccessLevel(perms[role][moduleName]);
+            if (userLevel >= requiredLevel) {
                 return next();
             }
-            return res.status(403).json({ error: `Acesso Negado. Seu cargo (${role}) não possui privilégios de ${requiredAction === 'view' ? 'visualização' : 'execução'} para o módulo ${moduleName}.` });
+            return res.status(403).json({ 
+                error: `Acesso Negado. Seu cargo (${role}) possui nível de acesso ${userLevel} para o módulo ${moduleName}, mas o nível mínimo requerido é ${requiredLevel}.` 
+            });
         }
 
         // Fallback de segurança para permissões padrão
         const defaultPermissions = {
             adm_l2: {
-                emprestimo: { view: true, execute: true },
-                usuarios: { view: true, execute: true },
-                ensalamento: { view: true, execute: true },
-                'carga-horaria': { view: true, execute: true }
+                emprestimo: 3,
+                usuarios: 3,
+                ensalamento: 3,
+                'carga-horaria': 3
             },
             ti: {
-                emprestimo: { view: true, execute: true },
-                usuarios: { view: false, execute: false },
-                ensalamento: { view: true, execute: true },
-                'carga-horaria': { view: false, execute: false }
+                emprestimo: 3,
+                usuarios: 1,
+                ensalamento: 3,
+                'carga-horaria': 1
             },
             rh: {
-                emprestimo: { view: false, execute: false },
-                usuarios: { view: false, execute: false },
-                ensalamento: { view: false, execute: false },
-                'carga-horaria': { view: true, execute: true }
+                emprestimo: 1,
+                usuarios: 1,
+                ensalamento: 1,
+                'carga-horaria': 3
             },
             visitante: {
-                emprestimo: { view: true, execute: false },
-                usuarios: { view: false, execute: false },
-                ensalamento: { view: true, execute: false },
-                'carga-horaria': { view: false, execute: false }
+                emprestimo: 2,
+                usuarios: 1,
+                ensalamento: 2,
+                'carga-horaria': 1
             }
         };
 
         const roleDefault = defaultPermissions[role] || defaultPermissions['visitante'];
-        const hasAccess = roleDefault[moduleName] && roleDefault[moduleName][requiredAction];
+        const userLevel = getAccessLevel(roleDefault[moduleName]);
 
-        if (hasAccess) {
+        if (userLevel >= requiredLevel) {
             return next();
         }
 
-        return res.status(403).json({ error: `Acesso Negado. Seu cargo (${role}) não possui permissão para acessar este módulo.` });
+        return res.status(403).json({ error: `Acesso Negado. Seu cargo (${role}) não possui nível de acesso suficiente para acessar o módulo ${moduleName}.` });
     };
 };
 

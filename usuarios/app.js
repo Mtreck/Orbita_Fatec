@@ -126,24 +126,27 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   // BUSCA PERMISSÕES GLOBAIS
-  let perms = { view: false, execute: false };
+  let userLevel = 1;
   try {
     const globalData = await apiFetch('/usuarios/config/permissions');
     const rolePerms = globalData[currentRole] || {};
-    perms = rolePerms['usuarios'] || { view: false, execute: false };
+    const rawPerm = rolePerms['usuarios'];
+    userLevel = (rawPerm !== undefined && typeof rawPerm === 'object')
+      ? (rawPerm.execute ? 3 : (rawPerm.view ? 2 : 1))
+      : (parseInt(rawPerm) || 1);
   } catch(e) {}
 
   const token = await user.getIdToken();
   setCachedAuth(user, currentRole, token);
 
-  // ADM L1 entra direto. Outros precisam de permissão 'view' vinda do Config Global.
-  if (currentRole !== 'adm_l1' && !perms.view) {
+  // ADM L1 entra direto. Outros precisam de 'view' (nível >= 2) vinda do Config Global.
+  if (currentRole !== 'adm_l1' && userLevel < 2) {
     window.location.href = '../meu-espaco/index.html';
     return;
   }
 
-  // Se não tiver permissão 'execute', bloqueia ações de edição/delete
-  if (currentRole !== 'adm_l1' && !perms.execute) {
+  // Se não tiver permissão 'execute' (nível >= 3), bloqueia ações de edição/delete
+  if (currentRole !== 'adm_l1' && userLevel < 3) {
     document.body.classList.add('hide-execute');
   } else {
     document.body.classList.remove('hide-execute');
@@ -328,7 +331,7 @@ function renderRoles(list) {
         <div class="role-item-id">ID: ${esc(role.id)}</div>
       </div>
       <div class="role-item-actions">
-        <button class="icon-btn delete-role-btn" data-id="${role.id}" data-name="${role.name}" title="Excluir cargo">
+        <button class="icon-btn delete-role-btn action-execute" data-id="${role.id}" data-name="${role.name}" title="Excluir cargo">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </button>
       </div>
@@ -499,10 +502,10 @@ async function salvarNovoCargo(e) {
     // Opcional: Atualizar permissões ao criar cargo (pode ser feito no backend, mas mantemos o padrão)
     const perms = await apiFetch('/usuarios/config/permissions');
     perms[id] = {
-      emprestimo: {view: true, execute: false},
-      usuarios: {view: false, execute: false},
-      ensalamento: {view: true, execute: false},
-      'carga-horaria': {view: false, execute: false}
+      emprestimo: 2,
+      usuarios: 1,
+      ensalamento: 2,
+      'carga-horaria': 1
     };
     await apiFetch('/usuarios/config/permissions', { method: 'PUT', body: JSON.stringify(perms) });
 
@@ -553,10 +556,10 @@ async function loadGlobalPermissions() {
     } else {
       // Configuração inicial padrão
       globalPermissions = {
-        adm_l2:    { emprestimo:{view:true, execute:false}, usuarios:{view:true, execute:false}, ensalamento:{view:true, execute:false}, 'carga-horaria':{view:true, execute:true} },
-        ti:        { emprestimo:{view:true, execute:true},  usuarios:{view:false,execute:false}, ensalamento:{view:true, execute:true},  'carga-horaria':{view:false,execute:false} },
-        visitante: { emprestimo:{view:true, execute:false}, usuarios:{view:false,execute:false}, ensalamento:{view:true, execute:false},  'carga-horaria':{view:false,execute:false} },
-        rh:        { emprestimo:{view:false,execute:false}, usuarios:{view:false,execute:false}, ensalamento:{view:false,execute:false}, 'carga-horaria':{view:true, execute:true} }
+        adm_l2:    { emprestimo: 2, usuarios: 2, ensalamento: 2, 'carga-horaria': 3 },
+        ti:        { emprestimo: 3, usuarios: 1, ensalamento: 3, 'carga-horaria': 1 },
+        visitante: { emprestimo: 2, usuarios: 1, ensalamento: 2, 'carga-horaria': 1 },
+        rh:        { emprestimo: 1, usuarios: 1, ensalamento: 1, 'carga-horaria': 3 }
       };
     }
     renderPermissionsGrid('global-permissions-grid', globalPermissions[activeRoleTab] || {});
@@ -607,12 +610,9 @@ async function saveGlobalPermissions() {
 
   // Collect from grid
   const rolePerms = {};
-  document.querySelectorAll('#global-permissions-grid .perm-card').forEach(card => {
-    const modId = card.querySelector('input[data-type="view"]').dataset.mod;
-    rolePerms[modId] = {
-      view: card.querySelector('input[data-type="view"]').checked,
-      execute: card.querySelector('input[data-type="execute"]').checked
-    };
+  document.querySelectorAll('#global-permissions-grid .perm-level-select').forEach(select => {
+    const modId = select.dataset.mod;
+    rolePerms[modId] = parseInt(select.value);
   });
 
   globalPermissions[activeRoleTab] = rolePerms;
@@ -633,37 +633,39 @@ function renderPermissionsGrid(containerId, currentPerms) {
   container.innerHTML = '';
 
   MODULES.forEach(mod => {
-    const perm = currentPerms[mod.id] || { view: false, execute: false };
+    // Normalização com retrocompatibilidade
+    let level = 1;
+    const rawPerm = currentPerms[mod.id];
+    if (rawPerm !== undefined) {
+      if (typeof rawPerm === 'object') {
+        if (rawPerm.execute) level = 3;
+        else if (rawPerm.view) level = 2;
+        else level = 1;
+      } else {
+        level = parseInt(rawPerm) || 1;
+      }
+    }
+
     const card = document.createElement('div');
-    card.className = `perm-card ${perm.view ? 'active' : ''}`;
+    card.className = `perm-card ${level > 1 ? 'active' : ''}`;
     card.innerHTML = `
       <div class="perm-card-title">${mod.icon} ${mod.name}</div>
-      <div class="perm-options">
-        <label class="perm-checkbox">
-          <input type="checkbox" data-mod="${mod.id}" data-type="view" ${perm.view ? 'checked' : ''}>
-          Ver
-        </label>
-        <label class="perm-checkbox ${!perm.view ? 'disabled' : ''}">
-          <input type="checkbox" data-mod="${mod.id}" data-type="execute" ${perm.execute ? 'checked' : ''} ${!perm.view ? 'disabled' : ''}>
-          Executar
-        </label>
+      <div class="perm-options" style="width: 100%;">
+        <select class="form-input perm-level-select" data-mod="${mod.id}" style="width: 100%; height: 40px; font-size: 0.85rem; padding: 0 0.5rem; background: var(--bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); cursor: pointer;">
+          <option value="1" ${level === 1 ? 'selected' : ''}>Nível 1 - Sem Acesso</option>
+          <option value="2" ${level === 2 ? 'selected' : ''}>Nível 2 - Apenas Leitura</option>
+          <option value="3" ${level === 3 ? 'selected' : ''}>Nível 3 - Acesso Total</option>
+        </select>
       </div>
     `;
 
-    const viewCheck = card.querySelector('input[data-type="view"]');
-    const execCheck = card.querySelector('input[data-type="execute"]');
-    const execLabel = card.querySelector('.perm-checkbox:nth-child(2)');
-
-    viewCheck.addEventListener('change', () => {
-      if (!viewCheck.checked) {
-        execCheck.checked = false;
-        execCheck.disabled = true;
-        execLabel.classList.add('disabled');
-        card.classList.remove('active');
-      } else {
-        execCheck.disabled = false;
-        execLabel.classList.remove('disabled');
+    const select = card.querySelector('.perm-level-select');
+    select.addEventListener('change', (e) => {
+      const val = parseInt(e.target.value);
+      if (val > 1) {
         card.classList.add('active');
+      } else {
+        card.classList.remove('active');
       }
     });
 

@@ -485,3 +485,8 @@ body {
 @keyframes orbit-spin {
   100% { transform: rotate(360deg); }
 }
+
+/* Ocultação global de botões de execução se a permissão 'execute' for falsa */
+.hide-execute .action-execute {
+  display: none !important;
+}
