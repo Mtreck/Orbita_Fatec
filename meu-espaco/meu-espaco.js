@@ -96,6 +96,9 @@ async function renderWidgets(role) {
   const container = document.getElementById('widgets-grid');
   container.innerHTML = '';
   
+  const filterEl = document.getElementById('widget-filter');
+  if (filterEl) filterEl.value = 'all';
+  
   const roleConfig = getRoleConfig(role);
   const modules = roleConfig.modules;
 
@@ -139,6 +142,7 @@ async function renderWidgets(role) {
 function createWidgetCard(icon, label, value, modId) {
   const div = document.createElement('div');
   div.className = 'widget-card';
+  div.dataset.module = modId;
   div.innerHTML = `
     <div class="widget-icon">${icon}</div>
     <div class="widget-info">
@@ -462,6 +466,21 @@ function setupEventListeners() {
   document.getElementById('btn-new-notice').onclick = () => openNoticeModal();
   document.getElementById('form-note').onsubmit = saveNote;
   document.getElementById('form-notice').onsubmit = saveNotice;
+
+  const filterEl = document.getElementById('widget-filter');
+  if (filterEl) {
+    filterEl.onchange = (e) => {
+      const selected = e.target.value;
+      const cards = document.querySelectorAll('#widgets-grid .widget-card');
+      cards.forEach(card => {
+        if (selected === 'all' || card.dataset.module === selected) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    };
+  }
 }
 
 window.abrirModal = (id) => document.getElementById(id).classList.add('active');

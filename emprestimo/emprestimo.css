@@ -59,6 +59,7 @@ body {
   backdrop-filter: blur(20px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   transition: transform 0.3s ease;
+  cursor: pointer;
 }
 
 .stat-item:hover {
@@ -494,7 +495,41 @@ body {
 /* ---- MOBILE RESPONSIVO ---- */
 @media (max-width: 600px) {
   .status-summary {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-item {
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  }
+
+  /* O card de Total ocupa a largura inteira horizontalmente de forma mais compacta */
+  .stat-item:first-child {
+    grid-column: span 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.25rem;
+  }
+
+  .stat-item:first-child .stat-val {
+    margin-bottom: 0;
+    order: 2;
+  }
+
+  .stat-item:first-child .stat-lbl {
+    order: 1;
+  }
+
+  .stat-val {
+    font-size: 1.75rem;
+  }
+
+  .stat-lbl {
+    font-size: 0.7rem;
   }
 
   .status-selector {
@@ -512,6 +547,87 @@ body {
   .form-card {
     padding: 1.5rem;
   }
+
+  /* Estilização do botão de Escanear QR como FAB no celular */
+  .btn-scan-qr {
+    position: fixed !important;
+    bottom: 24px !important;
+    right: 24px !important;
+    z-index: 1000 !important;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 6px 20px rgba(15, 78, 184, 0.4) !important;
+  }
+
+  .btn-scan-qr span {
+    display: none !important;
+  }
+
+  .btn-scan-qr svg {
+    margin: 0 !important;
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Ajustes dos filtros e busca no celular */
+  .toolbar-container {
+    padding: 1.25rem !important;
+    margin-bottom: 1.75rem !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+    backdrop-filter: none !important; /* Desativa backdrop-filter para liberar o position: fixed do botão filho */
+  }
+
+  .toolbar-top {
+    gap: 0 !important;
+  }
+
+  .search-box {
+    margin-bottom: 1rem !important;
+  }
+
+  .search-input {
+    padding: 0.9rem 1rem 0.9rem 3rem !important;
+    font-size: 0.95rem !important;
+  }
+
+  .filters-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+  }
+
+  .filter-group {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+  }
+
+  .filter-group label {
+    font-size: 0.72rem !important;
+    margin-bottom: 0.1rem !important;
+  }
+
+  .filter-group select {
+    width: 100% !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+    border-radius: 10px !important;
+    background-color: #fff !important;
+  }
+
+  .grid-info {
+    text-align: right !important;
+    font-size: 0.8rem !important;
+    color: var(--text-secondary) !important;
+    margin-top: 0.25rem !important;
+    font-weight: 700 !important;
+  }
 }
 
 .btn-scan-qr {
@@ -524,5 +640,5 @@ body {
 }
 
 .btn-scan-qr:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.95) !important;
 }

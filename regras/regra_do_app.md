@@ -97,6 +97,44 @@ Sempre que um arquivo for criado, alterado ou removido, registrar aqui seguindo 
 
 ## 8. Histórico de alterações
 
+### [2026-05-25] Ajuste de Nome de Marca e Tempo de Expiração do QR Code (Fidelidade PWA)
+- Autor: Antigravity
+- Branch: main
+- Arquivos alterados:
+  - `/fidelidade/index.html` (Alterado marca do cabeçalho de ÓRBITA Fidelidade para FATEC Fidelidade para manter consistência)
+  - `/fidelidade/validar.html` (Reduzido o tempo de expiração do QR Code de 120 segundos para 45 segundos, com tolerância a clock skew)
+- Tipo: Ajuste de UI/Branding e Correção de Segurança (QR Code)
+- Motivo: Evitar discrepância na marca e garantir que capturas de tela antigas expirem rapidamente, impedindo a validação de códigos defasados ou compartilhados.
+- Impacto: Melhora a consistência visual do módulo PWA e aumenta consideravelmente a segurança e eficácia do QR Code auto-regenerativo.
+- Como testar: Abrir a carteirinha PWA `/fidelidade/index.html`, verificar se o topo exibe FATEC Fidelidade. Tirar um print do QR Code, esperar passar o tempo de regeneração de 30 segundos mais a tolerância de 15 segundos e tentar validar o print. Deve constar como expirado.
+- Como reverter: Reverter a marca do cabeçalho no `/fidelidade/index.html` e restaurar o limite de 120 segundos no `/fidelidade/validar.html`.
+
+### [2026-05-25] Ajustes de Mobile, Filtro de Resumos e Correção de Notas no Meu Espaço
+- Autor: Antigravity
+- Branch: main
+- Arquivos alterados:
+  - `/meu-espaco/index.html` (Inclusão do seletor dropdown para filtrar resumos de módulos no mobile)
+  - `/meu-espaco/meu-espaco.js` (Lógica de filtragem dos widgets-card com base no módulo associado)
+  - `/meu-espaco/meu-espaco.css` (Regras de responsividade para ocultar/exibir o filtro, compactar os widgets, reordenar as seções colocando avisos acima do quadro do funcionário, evitar colisões de botões nos cabeçalhos, correção da classe das notas para `.note-text-display` resolvendo o wrap de palavras e posicionamento dos botões, e desativação das posições absolutas de notas no mobile com exibição em flex grid e botões de ação sempre visíveis)
+- Tipo: Ajuste de UI/UX Responsivo
+- Motivo: Proporcionar uma forma para o ADM N1 filtrar a visualização de resumos no celular, reordenar as seções para dar preferência a avisos, corrigir o botão "Nova Nota" que colidia com o título da seção, corrigir o bug de transbordamento de texto horizontal nas notas (unboxing de classes) e o posicionamento flutuante do rodapé de ações, e contornar a quebra de layout causada por posições absolutas (arrastar) em telas estreitas de celular.
+- Impacto: Interface móvel e desktop do Meu Espaço perfeitamente consistentes, com notas adaptáveis ao tamanho de tela e botões de ação (editar/excluir/fixar) utilizáveis em dispositivos móveis.
+- Como testar: Acessar a página Meu Espaço em modo móvel e desktop. Escrever uma nota com texto longo contínuo (ex: "testetesteteste") e verificar se ocorre a quebra de linha. No celular, certificar-se de que as notas estão dispostas uma abaixo da outra de forma centralizada e que os botões de ação estão visíveis sem precisar passar o mouse.
+- Como reverter: Reverter as alterações nos arquivos `/meu-espaco/index.html`, `/meu-espaco/meu-espaco.js` e `/meu-espaco/meu-espaco.css`.
+
+### [2026-05-25] Ajustes de Layout Mobile e Filtros Interativos no Módulo de Empréstimos
+- Autor: Antigravity
+- Branch: main
+- Arquivos alterados:
+  - `/emprestimo/index.html` (Inclusão do status "Cedido" no seletor de filtros e atributos `data-filter` nos cards de sumário)
+  - `/emprestimo/emprestimo.css` (Ajustes de responsividade mobile e inclusão de `cursor: pointer` nos cards de sumário)
+  - `/emprestimo/app.js` (Event listeners nos cards de sumário para atualizar o filtro de status ao serem clicados)
+- Tipo: Ajuste de UI/UX Responsivo e Melhoria de Usabilidade
+- Motivo: Melhorar a legibilidade dos cards de sumário no celular, evitar o espremimento da barra de busca, colocar o scanner de QR Code em um botão de ação flutuante (FAB), desativar o `backdrop-filter` do container para liberar o contexto do `position: fixed`, adicionar o status "Cedidos" no seletor de filtros de busca e permitir que o clique nos cards de sumário filtre a listagem automaticamente.
+- Impacto: Melhora significativa na usabilidade e visual do painel de empréstimos, facilitando a navegação com atalhos de filtros rápidos por cliques diretos nos números do sumário.
+- Como testar: Acessar a página de empréstimos. Verificar se há a opção "Cedidos" no select de status. Clicar em qualquer card de sumário superior (ex: clicando em "Disponíveis" ou "Total") e verificar se a listagem e o select de filtros atualizam condizentemente. No celular, verificar o layout compacto e a posição fixa do FAB do scanner no canto inferior direito.
+- Como reverter: Desfazer as alterações nos arquivos `/emprestimo/index.html`, `/emprestimo/emprestimo.css` e `/emprestimo/app.js`.
+
 ### [2026-05-22] Ajuste de CORS para Desenvolvimento Local (PWA Fidelidade / Multi-porta)
 - Autor: Antigravity
 - Branch: main

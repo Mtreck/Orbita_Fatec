@@ -287,10 +287,11 @@
         return;
       }
 
-      // Validação de expiração (120 segundos)
+      // Validação de expiração (45 segundos de tolerância)
       const qrTime = parseInt(timestampStr, 10);
       const nowTime = Math.floor(Date.now() / 1000);
-      if (isNaN(qrTime) || nowTime - qrTime > 120) {
+      const timeDiff = nowTime - qrTime;
+      if (isNaN(qrTime) || timeDiff > 45 || timeDiff < -15) {
         setExpiredState();
         return;
       }

@@ -227,6 +227,18 @@ function initDashboard() {
   document.getElementById('filter-local').addEventListener('change',  applyFilters);
   document.getElementById('filter-sala').addEventListener('change',   applyFilters);
 
+  // Click summary cards to filter
+  document.querySelectorAll('.status-summary .stat-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const filterVal = item.dataset.filter;
+      const statusSelect = document.getElementById('filter-status');
+      if (statusSelect && filterVal) {
+        statusSelect.value = filterVal;
+        applyFilters();
+      }
+    });
+  });
+
   // Grid click delegation
   const grid = document.getElementById('notebook-grid');
 

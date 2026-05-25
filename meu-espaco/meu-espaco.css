@@ -214,7 +214,7 @@
   padding-bottom: 0.25rem;
 }
 
-.note-text {
+.note-text-display {
   flex: 1;
   font-size: 0.9rem;
   line-height: 1.4;
@@ -532,4 +532,134 @@
   text-align: center;
   color: var(--text-secondary);
   font-style: italic;
+}
+
+/* ---- WIDGET FILTER ---- */
+.widgets-filter-container {
+  display: none;
+}
+
+/* ---- MOBILE RESPONSIVO ---- */
+@media (max-width: 600px) {
+  .page-title {
+    font-size: 1.85rem !important;
+  }
+
+  .page-subtitle {
+    font-size: 0.95rem !important;
+  }
+
+  /* Filtro de Resumos no Mobile */
+  .widgets-filter-container {
+    display: flex !important;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    background: white;
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  }
+
+  .widgets-filter-container label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .widget-filter-select {
+    flex: 1;
+    padding: 0.6rem 0.85rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    outline: none;
+    background-color: #fff;
+    cursor: pointer;
+    color: var(--text-main);
+  }
+
+  /* Widgets mais compactos no Mobile */
+  .widgets-grid {
+    gap: 0.75rem !important;
+    margin-bottom: 2rem !important;
+  }
+
+  .widget-card {
+    padding: 1rem !important;
+    border-radius: 14px !important;
+  }
+
+  .widget-icon {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1.25rem !important;
+    border-radius: 10px !important;
+  }
+
+  .widget-value {
+    font-size: 1.25rem !important;
+  }
+
+  /* Inversão de ordem: Avisos primeiro, Quadro do Funcionário depois */
+  .espaco-layout {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+  }
+
+  .notices-section {
+    order: 1 !important;
+  }
+
+  .notes-section {
+    order: 2 !important;
+    padding: 1.5rem 1rem !important;
+  }
+
+  /* Layout de notas no Celular (sobrepõe o posicionamento absoluto do desktop) */
+  .notes-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+    justify-content: center !important;
+    min-height: auto !important;
+    padding: 1rem 0 !important;
+  }
+
+  .note-card {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 290px !important;
+    min-height: 180px !important;
+    margin: 0 !important;
+  }
+
+  .note-actions {
+    opacity: 1 !important; /* Sempre visível no mobile */
+    margin-top: auto !important; /* Garante que fica no rodapé do card */
+  }
+
+  /* Evitar colisão do botão "Nova Nota" ou "Gerenciar" com o título */
+  .section-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .section-header .header-title {
+    justify-content: flex-start !important;
+  }
+
+  .section-header .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 0.8rem 1.25rem !important;
+  }
 }

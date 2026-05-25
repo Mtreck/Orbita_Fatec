@@ -29,6 +29,19 @@
             <p class="page-subtitle">Organize seus lembretes, acompanhe avisos e veja informações úteis para sua rotina.</p>
           </div>
 
+          <!-- Filtro de Resumos (Visível apenas no mobile) -->
+          <div class="widgets-filter-container" id="widgets-filter-container">
+            <label for="widget-filter">Filtrar Resumos:</label>
+            <select id="widget-filter" class="widget-filter-select">
+              <option value="all">Todos os Resumos</option>
+              <option value="emprestimo">Empréstimos Ativos</option>
+              <option value="usuarios">Usuários Ativos</option>
+              <option value="ensalamento">Salas em Uso</option>
+              <option value="carga-horaria">Eventos do Mês</option>
+              <option value="dashboard">Status do Admin</option>
+            </select>
+          </div>
+
           <!-- Linha superior: Widgets por Permissão -->
           <div id="widgets-grid" class="widgets-grid">
             <!-- Renderizado dinamicamente via JS -->
