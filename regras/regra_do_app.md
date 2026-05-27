@@ -575,3 +575,28 @@ Para garantir que o front-end estático e a API servida em Node.js (funções se
   - Novo card `🤝 Parceiros` (ID `empresas`) adicionado à lista.
   - Novos cargos criados pelo sistema já recebem o campo `empresas: 1` (Sem Acesso) por padrão.
 - Como testar: Acessar Usuários → Gerenciar Acessos e verificar se aparecem os cards de "Planejamento Acadêmico" e "Parceiros".
+
+### [2026-05-27] Ajuste na Simulação de Aulas Não Presenciais (EAD/Carga Reservada) e Otimização do Consumo do Firebase
+- Autor: Antigravity
+- Branch: main
+- Arquivos alterados:
+  - `/api/rotas/ensalamento.js` (Rota `/custom/checkConflict` adaptada para validar conflitos apenas entre aulas presenciais/EAD concorrentes)
+  - `/planejamento-academico/firebase-service.js` (Atualização de `checkConflict` para aceitar e passar o `classType`)
+  - `/planejamento-academico/ensalamento.js` (Passagem do `classType` nas validações de conflito ao salvar no calendário)
+  - `/planejamento-academico/simulation-engine.js` (Prioridade de ordenação ajustada, motor `areClassesAvailable` adaptado para não bloquear slots por carga reservada, `scoreWeeklyDistribution` e `attemptAllocation` ajustados para não aplicar penalidades ou marcar a simulação como inviável caso a carga reservada fique como "Não Alocada")
+  - `/usuarios/app.js` (Aumento do timer de polling para 2min, verificação de visibilidade da aba via `document.hidden`)
+  - `/meu-espaco/meu-espaco.js` (Aumento dos timers de notas e avisos para 2min, verificação de `document.hidden`)
+  - `/emprestimo/app.js` (Aumento de timers de polling para 2min, verificação de `document.hidden`)
+  - `/rh/funcionarios/app.js` (Aumento do timer de atualização para 2min, verificação de `document.hidden`)
+  - `/rh/carga-horaria/carga-horaria.js` (Aumento do timer de atualização para 2min, verificação de `document.hidden`)
+- Tipo: Correção de Regras de Negócio e Otimização de Performance/Custos (Firebase)
+- Motivo:
+  - O simulador de grade gerava pontuações baixas e sugestões "INVIÁVEIS" devido ao limite de 5 dias na semana concorrendo com 6 aulas totais. Como a **Carga Reservada** não ocupa espaço e os alunos não têm aula física, ela deve poder ficar "Não Alocada" (`weekday: null`) sem penalidade, e a aula de **EAD** deve ocupar seu próprio dia de semana sem coexistir com aulas presenciais.
+  - O consumo do Firebase atingiu 97% da cota gratuita diária. Identificamos que requisições de segundo plano (`setInterval`) estavam rodando excessivamente de forma desnecessária, mesmo quando as abas do navegador estavam ocultas ou inativas.
+- Impacto:
+  - Simulações geradas com sucesso com a Carga Reservada alocada de forma adequada (ou não alocada de forma segura) e EAD respeitando o dia útil dedicado, resultando em status "BOA/IDEAL" e scores altos (>150).
+  - Redução drástica nas leituras do Firestore (estimada em mais de 90% em abas ociosas e 4x em abas ativas), garantindo a longevidade da cota gratuita do banco de dados.
+- Como testar:
+  - No simulador, rodar a simulação para uma turma com 6 matérias (ex: 3 presenciais, 2 EAD, 1 Carga Reservada) e verificar se o resultado dá "BOA/IDEAL" e a Carga Reservada vai para "Não Alocada" de forma pacífica.
+  - Abrir a aba de Rede (Network) no navegador, alternar de aba (minimizando o Órbita) e verificar que as requisições recorrentes cessam em segundo plano.
+- Como reverter: Desfazer as alterações de código e restaurar as versões anteriores dos arquivos listados.
