@@ -260,7 +260,7 @@ export class SimulationEngine {
     const nonPresencialAllocs = allocations.filter(a => a.classType !== 'presencial' && a.weekday !== null);
 
     // Regra: Todas as disciplinas da matriz foram alocadas com sucesso
-    if (unallocated === 0) {
+    if (unallocatedBlocking === 0) {
       score += this.weights.idealDistributionBonus;
       reasons.push("Todas as disciplinas da matriz foram alocadas com sucesso");
     }

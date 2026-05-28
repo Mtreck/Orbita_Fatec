@@ -154,37 +154,13 @@ async function loadAllData() {
   classes = await fb.getActive('classes');
   rooms = await fb.getActive('rooms');
   calendarEntries = await fb.getCalendarEntries();
-  try {
-    disciplines = await fb.getActive('disciplines');
-  } catch (err) {
-    console.error("Erro ao carregar matrizes/disciplinas:", err);
-    disciplines = [];
-  }
-
-  // Diagnóstico adicional para entender se existem disciplinas na base
-  try {
-    const rawDisciplines = await fb.getAll('disciplines');
-    console.log("DIAGNOSTICO MATRIZ - Total no banco:", rawDisciplines.length);
-    if (rawDisciplines.length > 0) {
-      console.log("DIAGNOSTICO MATRIZ - Amostra do banco:", rawDisciplines[0]);
-    }
-    console.log("DIAGNOSTICO MATRIZ - Ativas em cache:", disciplines.length);
-  } catch (e) {
-    console.log("Erro no diagnóstico de disciplinas:", e);
-  }
 
   // Executar limpeza automática de períodos importados incorretamente no passado
-  const hasCorrupted = classes.some(t => isCorruptedPeriod(t.academicPeriod)) || 
-                       disciplines.some(d => isCorruptedPeriod(d.academicPeriod));
+  const hasCorrupted = classes.some(t => isCorruptedPeriod(t.academicPeriod));
   if (hasCorrupted) {
     await autoCleanupCorruptedData();
     // Recarregar os dados limpos
     classes = await fb.getActive('classes');
-    try {
-      disciplines = await fb.getActive('disciplines');
-    } catch (err) {
-      disciplines = [];
-    }
   }
 
   updateSelects();
@@ -981,7 +957,24 @@ async function handleDeleteEntry() {
 }
 
 // --- SIMULATION FLOW ---
-function openSimulationModal() {
+async function openSimulationModal() {
+  const btn = document.getElementById('btn-open-simulation');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span> Carregando...';
+  btn.disabled = true;
+
+  try {
+    if (disciplines.length === 0) {
+      disciplines = await fb.getActive('disciplines');
+      updateAcademicPeriodDropdowns();
+    }
+  } catch (err) {
+    console.error("Erro ao carregar disciplinas para simulação:", err);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+
   document.getElementById('modal-simulation').style.display = 'flex';
   document.getElementById('simulation-step-1').style.display = 'block';
   document.getElementById('simulation-step-2').style.display = 'none';
@@ -1114,12 +1107,34 @@ function loadLessonsFromMatrix() {
     }).filter(Boolean)
   )];
   
-  // Filtrar disciplinas correspondentes à matriz para o curso, período letivo e período da turma
-  const matchedDisciplines = disciplines.filter(d => 
-    d.courseId === courseId &&
-    d.academicPeriod === academicPeriod &&
-    selectedSemesters.includes(d.semester)
-  );
+  // Filtrar disciplinas correspondentes à matriz para o curso, período letivo e período da turma.
+  // Se não houver disciplinas cadastradas no período letivo exato (ex: 2026.2), tenta
+  // buscar no outro período letivo do mesmo ano (ex: 2026.1) ou qualquer outro disponível.
+  const matchedDisciplines = [];
+  selectedSemesters.forEach(sem => {
+    const courseSemDisciplines = disciplines.filter(d => 
+      d.courseId === courseId && 
+      d.semester === sem
+    );
+    
+    if (courseSemDisciplines.length === 0) return;
+    
+    const exactPeriodDisciplines = courseSemDisciplines.filter(d => d.academicPeriod === academicPeriod);
+    if (exactPeriodDisciplines.length > 0) {
+      matchedDisciplines.push(...exactPeriodDisciplines);
+    } else {
+      const currentYear = academicPeriod.split('.')[0];
+      const sameYearDisciplines = courseSemDisciplines.filter(d => d.academicPeriod && d.academicPeriod.startsWith(currentYear));
+      
+      if (sameYearDisciplines.length > 0) {
+        const bestPeriod = sameYearDisciplines[0].academicPeriod;
+        matchedDisciplines.push(...sameYearDisciplines.filter(d => d.academicPeriod === bestPeriod));
+      } else {
+        const fallbackPeriod = courseSemDisciplines[0].academicPeriod;
+        matchedDisciplines.push(...courseSemDisciplines.filter(d => d.academicPeriod === fallbackPeriod));
+      }
+    }
+  });
 
   const courseDisciplines = disciplines.filter(d => d.courseId === courseId);
   console.log("loadLessonsFromMatrix debug:", {

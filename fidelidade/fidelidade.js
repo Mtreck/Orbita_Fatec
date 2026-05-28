@@ -15,8 +15,7 @@ const API_BASE = (window.location.hostname === '127.0.0.1' || window.location.ho
 let currentUser = null;
 let currentRole = null;
 let qrcodeInstance = null;
-let countdownInterval = null;
-let timeLeft = 30;
+let suspensionCheckInterval = null;
 let allPartners = [];
 let selectedCategory = 'Todos';
 let searchQuery = '';
@@ -63,7 +62,7 @@ function showApp() {
 
 function handleSuspension() {
   isSuspended = true;
-  if (countdownInterval) clearInterval(countdownInterval);
+  if (suspensionCheckInterval) clearInterval(suspensionCheckInterval);
   
   const qrcodeActive = document.getElementById('qrcode-active');
   const qrcodeSuspended = document.getElementById('qrcode-suspended');
@@ -80,26 +79,12 @@ function handleSuspension() {
   showApp();
 }
 
-function updateTimerUI() {
-  const timerTextEl = document.getElementById("timer-seconds");
-  const barFillEl = document.getElementById("progress-bar-fill");
-  
-  if (timerTextEl) {
-    timerTextEl.textContent = timeLeft;
-  }
-  if (barFillEl) {
-    const percentage = (timeLeft / 30) * 100;
-    barFillEl.style.width = `${percentage}%`;
-  }
-}
-
 function generateQRCode(uid) {
-  const timestamp = Math.floor(Date.now() / 1000);
   let currentOrigin = window.location.origin;
   if (window.location.hostname.endsWith('vercel.app')) {
     currentOrigin = 'https://orbita-fatec-ti.vercel.app';
   }
-  const qrText = `${currentOrigin}/fidelidade/validar.html?u=${uid}&t=${timestamp}`;
+  const qrText = `${currentOrigin}/fidelidade/validar.html?u=${uid}`;
   
   const qrcodeContainer = document.getElementById("qrcode");
   if (!qrcodeContainer) return;
@@ -109,7 +94,7 @@ function generateQRCode(uid) {
       text: qrText,
       width: 180,
       height: 180,
-      colorDark : "#0b1f33",
+      colorDark : "#031426",
       colorLight : "#ffffff",
       correctLevel : QRCode.CorrectLevel.M
     });
@@ -117,37 +102,71 @@ function generateQRCode(uid) {
     qrcodeInstance.clear();
     qrcodeInstance.makeCode(qrText);
   }
-
-
 }
 
-function startQRCodeTimer(uid) {
-  if (countdownInterval) clearInterval(countdownInterval);
+function startStatusChecker() {
+  if (suspensionCheckInterval) clearInterval(suspensionCheckInterval);
   
-  timeLeft = 30;
-  updateTimerUI();
-  
-  countdownInterval = setInterval(async () => {
-    timeLeft--;
-    if (timeLeft < 0) {
-      timeLeft = 30;
-      
-      // Verification call to see if status was changed to inactive in real-time
-      try {
-        const userData = await apiFetch('/usuarios/me');
-        if (userData.ativo === false) {
-          handleSuspension();
-          return;
-        }
-      } catch (e) {
-        console.warn("Erro ao validar usuário durante contagem regressiva:", e);
+  suspensionCheckInterval = setInterval(async () => {
+    if (document.hidden) return; // Economiza leituras no Firebase se a aba estiver inativa
+    
+    try {
+      const userData = await apiFetch('/usuarios/me');
+      if (userData.ativo === false) {
+        handleSuspension();
       }
-      
-      generateQRCode(uid);
+    } catch (e) {
+      console.warn("Erro ao verificar status do usuário:", e);
     }
-    updateTimerUI();
-  }, 1000);
+  }, 120000); // Revalidação a cada 2 minutos
 }
+
+window.gerarPDF = function() {
+  const printArea = document.getElementById('print-area');
+  if (!printArea) return;
+  
+  printArea.innerHTML = '';
+  
+  // Criar o cartão dobrável (frente + linha de dobra + verso)
+  const foldedCard = document.createElement('div');
+  foldedCard.className = 'print-folded-card';
+  
+  // Clone da frente do cartão
+  const digitalCard = document.getElementById('digital-card');
+  if (!digitalCard) return;
+  const clonedCard = digitalCard.cloneNode(true);
+  clonedCard.removeAttribute('id'); // remove ID para evitar IDs duplicados
+  
+  // Linha de dobra tracejada
+  const foldLine = document.createElement('div');
+  foldLine.className = 'print-fold-line';
+  
+  // Verso do cartão
+  const cardBack = document.createElement('div');
+  cardBack.className = 'digital-card-print-back';
+  
+  // Clona apenas a imagem do QR Code
+  const qrImg = document.querySelector('#qrcode img');
+  if (!qrImg) return;
+  const clonedQRImg = qrImg.cloneNode(true);
+  clonedQRImg.className = 'print-qr-image';
+  clonedQRImg.removeAttribute('style'); // Remove estilos inline para evitar conflitos de tamanho
+  
+  const backText = document.createElement('span');
+  backText.className = 'print-back-text';
+  backText.textContent = 'FATEC — CARTÃO DE BENEFÍCIOS';
+  
+  cardBack.appendChild(clonedQRImg);
+  cardBack.appendChild(backText);
+  
+  foldedCard.appendChild(clonedCard);
+  foldedCard.appendChild(foldLine);
+  foldedCard.appendChild(cardBack);
+  
+  printArea.appendChild(foldedCard);
+  
+  window.print();
+};
 
 function renderPartners(partners) {
   const grid = document.getElementById('partners-grid');
@@ -446,7 +465,7 @@ function initFidelidade(userData) {
   }
   
   generateQRCode(userData.uid);
-  startQRCodeTimer(userData.uid);
+  startStatusChecker();
   loadPartnersList();
   showApp();
 }

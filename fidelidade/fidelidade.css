@@ -1,25 +1,25 @@
 /* FATEC FIDELIDADE — ESTILOS MOBILE-FIRST PREMIUM */
 
 :root {
-  --bg-dark: #031426;
-  --bg-gradient: linear-gradient(145deg, #050e24 0%, #0d2347 50%, #0f4eb8 100%);
+  --bg-dark: #F4F7FB;
+  --bg-gradient: linear-gradient(145deg, #F4F7FB 0%, #E2E8F0 100%);
   --primary: #0f4eb8;
-  --primary-glow: rgba(15, 78, 184, 0.45);
+  --primary-glow: rgba(15, 78, 184, 0.15);
   --secondary: #1e63d6;
   --accent: #f97316;
-  --accent-glow: rgba(249, 115, 22, 0.4);
-  --card-bg: rgba(255, 255, 255, 0.08);
-  --card-border: rgba(255, 255, 255, 0.12);
+  --accent-glow: rgba(249, 115, 22, 0.25);
+  --card-bg: #FFFFFF;
+  --card-border: rgba(3, 20, 38, 0.08);
   
-  --text-main: #ffffff;
-  --text-secondary: #94a3b8;
-  --text-dark: #0b1f33;
-  --border-light: rgba(255, 255, 255, 0.08);
+  --text-main: #031426;
+  --text-secondary: #64748B;
+  --text-dark: #031426;
+  --border-light: rgba(3, 20, 38, 0.08);
   
   --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.15);
+  --success-bg: rgba(16, 185, 129, 0.12);
   --error: #ef4444;
-  --error-bg: rgba(239, 68, 68, 0.15);
+  --error-bg: rgba(239, 68, 68, 0.12);
   
   --font-title: 'Outfit', sans-serif;
   --font-body: 'Inter', sans-serif;
@@ -59,8 +59,8 @@ body {
 .spinner {
   width: 44px;
   height: 44px;
-  border: 3.5px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--accent);
+  border: 3.5px solid rgba(3, 20, 38, 0.15);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
   margin-bottom: 1rem;
@@ -77,11 +77,10 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: rgba(3, 20, 38, 0.6);
-  backdrop-filter: blur(10px);
+  background: #F4F7FB;
   border-left: 1px solid var(--card-border);
   border-right: 1px solid var(--card-border);
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 40px rgba(3, 20, 38, 0.08);
   padding-bottom: 2rem;
   position: relative;
 }
@@ -97,12 +96,28 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1.2rem 1.5rem;
-  border-bottom: 1px solid var(--card-border);
-  background: rgba(3, 20, 38, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: #031426;
+  color: #FFFFFF;
   position: sticky;
   top: 0;
   z-index: 500;
   backdrop-filter: blur(20px);
+}
+
+.app-header .brand-title {
+  color: #FFFFFF;
+}
+
+.app-header .btn-icon {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.app-header .btn-icon:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
 }
 
 .header-brand {
@@ -219,8 +234,8 @@ body {
 .digital-card {
   width: 100%;
   aspect-ratio: 1.6 / 1; /* Proporção de cartão de crédito */
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: linear-gradient(135deg, #031426 0%, #0c2f6d 50%, #0F4EB8 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 20px;
   padding: 1.5rem;
   display: flex;
@@ -228,8 +243,24 @@ body {
   justify-content: space-between;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 
+  box-shadow: 0 12px 30px rgba(3, 20, 38, 0.25), 
               inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+.digital-card .brand-title,
+.digital-card .f-logo,
+.digital-card .user-details h2,
+.digital-card .footer-val {
+  color: #FFFFFF;
+}
+
+.digital-card .user-email {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.digital-card .footer-label {
+  color: rgba(255, 255, 255, 0.55);
 }
 
 /* Efeito luminoso no fundo do cartão */
@@ -257,22 +288,26 @@ body {
 .card-brand {
   display: flex;
   flex-direction: column;
-  line-height: 1.1;
+  line-height: 0.95;
+  align-items: flex-start;
 }
 
-.f-logo {
-  font-family: var(--font-title);
-  font-weight: 800;
-  font-size: 1.4rem;
-  letter-spacing: 0.5px;
+.card-logo-img {
+  height: 38px;
+  width: auto;
+  max-width: 145px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  display: block;
 }
 
 .card-tag {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.52rem;
+  font-weight: 800;
   color: var(--accent);
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.2px;
+  margin-top: -4px;
 }
 
 .role-badge {
@@ -400,7 +435,7 @@ body {
   border: 1px solid var(--card-border);
   border-radius: 20px;
   padding: 1.75rem;
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 25px rgba(3, 20, 38, 0.05);
 }
 
 .qrcode-content {
@@ -546,18 +581,19 @@ body {
 .search-box {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
+  background: #FFFFFF;
   border: 1px solid var(--card-border);
   border-radius: 12px;
   padding: 0 0.85rem;
   height: 48px;
   transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(3, 20, 38, 0.02);
 }
 
 .search-box:focus-within {
-  background: rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
   border-color: var(--primary);
-  box-shadow: 0 0 12px rgba(15, 78, 184, 0.25);
+  box-shadow: 0 0 12px rgba(15, 78, 184, 0.15);
 }
 
 .search-icon {
@@ -589,8 +625,8 @@ body {
 }
 
 .partner-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #FFFFFF;
+  border: 1px solid rgba(3, 20, 38, 0.06);
   border-radius: 16px;
   padding: 1.1rem;
   display: flex;
@@ -599,17 +635,19 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(3, 20, 38, 0.03);
 }
 
 .partner-card:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: #FFFFFF;
+  border-color: var(--secondary);
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(3, 20, 38, 0.06);
 }
 
 .partner-card.expanded {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: #FFFFFF;
+  border-color: rgba(3, 20, 38, 0.12);
 }
 
 .partner-header-row {
@@ -623,8 +661,8 @@ body {
   width: 48px;
   height: 48px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(3, 20, 38, 0.03);
+  border: 1px solid rgba(3, 20, 38, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -780,10 +818,10 @@ body {
   bottom: 1.5rem;
   left: 1.5rem;
   right: 1.5rem;
-  background: rgba(3, 20, 38, 0.95);
+  background: #FFFFFF;
   border: 1px solid var(--card-border);
   border-radius: 16px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 15px 35px rgba(3, 20, 38, 0.15);
   z-index: 1000;
   backdrop-filter: blur(20px);
   padding: 1rem 1.2rem;
@@ -834,7 +872,7 @@ body {
 }
 
 .pwa-steps {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--card-border);
   margin-top: 0.75rem;
   padding-top: 0.75rem;
 }
@@ -897,8 +935,8 @@ body {
 }
 
 .category-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
+  border: 1px solid rgba(3, 20, 38, 0.08);
   color: var(--text-secondary);
   padding: 0.5rem 1.1rem;
   border-radius: 30px;
@@ -908,12 +946,13 @@ body {
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(3, 20, 38, 0.02);
 }
 
 .category-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(3, 20, 38, 0.02);
   color: var(--text-main);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(3, 20, 38, 0.15);
   transform: translateY(-1px);
 }
 
@@ -965,5 +1004,143 @@ body {
 @media (min-width: 480px) {
   body {
     background-color: var(--bg-dark);
+  }
+}
+
+.btn-print-card:hover {
+  background: rgba(15, 78, 184, 0.1) !important;
+  transform: translateY(-1px);
+}
+
+/* Estilos de Impressão (PDF/Imprimir) - Layout em Bloco Robusto */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    background-image: none !important;
+    color: #031426 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Esconde todos os elementos do app e exibe apenas a área de impressão */
+  #auth-guard,
+  #app {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 1.5cm;
+    box-sizing: border-box;
+    text-align: center !important;
+  }
+  
+  /* Cartão Dobrável Impresso */
+  .print-folded-card {
+    width: 8.56cm !important;
+    height: 10.796cm !important; /* 5.398cm * 2 */
+    border: 1.5px solid #031426 !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    display: block !important; /* Layout em bloco seguro para impressão */
+    margin: 0 auto !important; /* Centraliza o cartão horizontalmente */
+    background: #0f4eb8 !important; /* Fallback */
+    background: linear-gradient(135deg, #0c2f6d 0%, #0F4EB8 50%, #1e63d6 100%) !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+  }
+  
+  /* Frente do Cartão - Preserva Layout Original do Front-end */
+  .print-folded-card .digital-card {
+    width: 8.56cm !important;
+    height: 5.398cm !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    color: #FFFFFF !important;
+  }
+  
+  .print-folded-card .digital-card * {
+    color: #FFFFFF !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Esconder brilhos na impressão */
+  .print-folded-card .card-glow {
+    display: none !important;
+  }
+  
+  /* Linha de dobra tracejada */
+  .print-fold-line {
+    width: 100% !important;
+    height: 0 !important;
+    border-bottom: 2px dashed rgba(255, 255, 255, 0.45) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Verso do Cartão */
+  .digital-card-print-back {
+    width: 8.56cm !important;
+    height: 5.398cm !important;
+    display: block !important; /* Bloco seguro */
+    padding: 0.4cm !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+    color: #FFFFFF !important;
+    text-align: center !important;
+    position: relative !important;
+  }
+  
+  /* Imagem do QR Code pura sem bordas/faixas brancas esticadas */
+  /* Imagem do QR Code pura com bordas e arredondado */
+  .print-qr-image {
+    display: block !important;
+    width: 2.8cm !important;
+    height: 2.8cm !important;
+    margin: 0.5cm auto 0 auto !important; /* Perfeitamente centralizado */
+    border-radius: 12px !important;
+    border: 4px solid #FFFFFF !important;
+    background: #FFFFFF !important;
+    box-sizing: border-box !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .print-back-text {
+    display: block !important;
+    font-family: var(--font-title) !important;
+    font-size: 7.5pt !important;
+    font-weight: 700 !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    letter-spacing: 0.5px !important;
+    text-align: center !important;
+    text-transform: uppercase !important;
+    position: absolute !important;
+    bottom: 0.4cm !important;
+    left: 0.4cm !important;
+    right: 0.4cm !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* Esconder área de impressão por padrão na tela do app */
+@media screen {
+  .print-only {
+    display: none !important;
   }
 }

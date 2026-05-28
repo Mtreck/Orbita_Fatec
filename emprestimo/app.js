@@ -243,6 +243,60 @@ function initDashboard() {
     });
   });
 
+  // Cadastro form submit listener
+  document.getElementById('form-cadastro').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('cad-id').value.trim();
+    const tipo = document.getElementById('cad-tipo').value.trim();
+    const temQrCode = document.getElementById('cad-tem-qr').checked;
+    
+    if (!id || !tipo) return;
+    
+    // Validar duplicidade
+    const existing = notebooksDB.find(n => n.id.toLowerCase() === id.toLowerCase());
+    if (existing) {
+      alert(`Erro: Já existe um item cadastrado com o identificador "${id}".`);
+      return;
+    }
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Cadastrando...';
+    submitBtn.disabled = true;
+    
+    const userName = currentUser.displayName || currentUser.email.split('@')[0];
+    
+    const newItem = {
+      id,
+      tipo,
+      temQrCode,
+      status: 'guardado',
+      local: 'T.I.',
+      responsavel: userName,
+      updatedAt: new Date().toISOString(),
+      observacao: ''
+    };
+    
+    try {
+      await apiFetch(`/emprestimos/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(newItem)
+      });
+      
+      fecharCadastro();
+      
+      // Recarregar itens e atualizar grid
+      await loadNotebooks();
+      applyFilters();
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao cadastrar item: ' + err.message);
+    } finally {
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+    }
+  });
+
   // Grid click delegation
   const grid = document.getElementById('notebook-grid');
 
@@ -338,6 +392,15 @@ window.fecharModalReserva = function() {
   document.getElementById('form-reserva').reset();
 };
 
+window.abrirCadastro = function() {
+  document.getElementById('modal-cadastro').classList.add('active');
+};
+
+window.fecharCadastro = function() {
+  document.getElementById('modal-cadastro').classList.remove('active');
+  document.getElementById('form-cadastro').reset();
+};
+
 function applyFilters() {
   const s   = document.getElementById('search-input').value.toLowerCase();
   const st  = document.getElementById('filter-status').value;
@@ -388,10 +451,14 @@ function renderGrid(list) {
 
     const updateStr = n.updatedAt ? new Date(n.updatedAt).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) + ', ' + new Date(n.updatedAt).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) : '---';
 
+    const qrBtnHtml = n.temQrCode !== false 
+      ? `<button class="btn btn-secondary btn-qr action-execute" data-id="${n.id}" style="opacity:0.4; font-size:0.75rem">GERAR QR</button>` 
+      : `<button class="btn btn-secondary action-execute" disabled style="opacity:0.2; font-size:0.75rem; cursor:not-allowed" title="Item configurado sem QR Code">SEM QR</button>`;
+
     card.innerHTML = `
       <div class="card-header">
         <div style="display:flex; align-items:center; gap:0.5rem">
-          <span class="card-id">${esc(n.id)}</span>
+          <span class="card-id" title="${esc(n.tipo || 'Notebook')}">${esc(n.id)} ${n.tipo ? `<span style="font-size:0.75rem; color:var(--text-secondary); font-weight:normal;">(${esc(n.tipo)})</span>` : ''}</span>
           <span class="badge badge-${n.status}">${esc(n.status.toUpperCase())}</span>
         </div>
         <button class="btn-lock action-execute ${n.status==='reservado'?'active':''}" data-id="${n.id}" title="${n.status==='reservado'?'Liberar':'Reservar'}" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:5px; display:flex; align-items:center; transition:0.2s">
@@ -415,7 +482,7 @@ function renderGrid(list) {
 
         <div class="card-actions">
           <a href="movimentar.html?id=${n.id}" class="btn btn-secondary action-execute">Movimentar</a>
-          <button class="btn btn-secondary btn-qr action-execute" data-id="${n.id}" style="opacity:0.4; font-size:0.75rem">GERAR QR</button>
+          ${qrBtnHtml}
         </div>
     `;
     grid.appendChild(card);
@@ -593,15 +660,25 @@ window.abrirScanner = function() {
     { facingMode:'environment' },
     { fps:10, qrbox:{ width:240, height:240 } },
     (decoded) => {
-      const match = decoded.match(/Not_Med\d+/i);
-      if (match) {
-        pararScanner();
-        let notebookId = match[0];
-        // Normaliza o case para "Not_MedXX" padrão
-        if (notebookId.toLowerCase().startsWith('not_med')) {
-          notebookId = 'Not_Med' + notebookId.substring(7);
+      let itemId = '';
+      try {
+        const url = new URL(decoded);
+        itemId = url.searchParams.get('id');
+      } catch (e) {
+        const queryMatch = decoded.match(/[?&]id=([^&]+)/);
+        if (queryMatch) {
+          itemId = queryMatch[1];
+        } else {
+          itemId = decoded.trim();
         }
-        window.location.href = `/emprestimo/movimentar.html?id=${notebookId}`;
+      }
+
+      if (itemId) {
+        if (/^not_med\d+$/i.test(itemId)) {
+          itemId = 'Not_Med' + itemId.substring(7);
+        }
+        pararScanner();
+        window.location.href = `/emprestimo/movimentar.html?id=${itemId}`;
       } else {
         alert('QR Code inválido: ' + decoded);
       }

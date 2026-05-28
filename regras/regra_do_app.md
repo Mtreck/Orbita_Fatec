@@ -8,8 +8,9 @@ O Órbita FATEC é um ecossistema de gestão institucional desenvolvido para a F
   - `vercel.json`: Arquivo que gerencia o roteamento "Zero Config" para o Vercel.
   - `firestore.rules`: Regras de segurança rigorosas trancando todo o acesso client-side.
 - `/api`: Servidor Backend em Node.js (Express) hospedado no Vercel. Contém a lógica de autenticação via Firebase Admin SDK (`firebase.js`) e as rotas para os módulos (`/rotas`).
-- `/core`: Arquivos compartilhados da arquitetura do Front-end (Firebase Auth, layout, segurança).
-- `/emprestimo`, `/usuarios`, `/planejamento-academico`, `/rh/carga-horaria`, `/rh/funcionarios`, `/empresas`, `/valida`, `/meu-espaco`, `/fidelidade`: Módulos independentes do sistema consumindo a API REST através da função `apiFetch` (ou endpoint público).
+- `/auth`: Tela de login e fluxo de redefinição de senha institucional.
+- `/core`: Arquivos compartilhados da arquitetura do Front-end (Firebase Auth, layout, segurança, permissões).
+- `/emprestimo`, `/usuarios`, `/planejamento-academico`, `/rh` (Carga Horária / Funcionários), `/empresas`, `/valida`, `/meu-espaco`, `/fidelidade`: Módulos independentes do sistema consumindo a API REST através da função `apiFetch` (ou endpoint público).
 - `/regras`: Documentação técnica e logs de alteração.
 
 ## 3. Fluxo de autenticação e Arquitetura REST
@@ -22,11 +23,11 @@ O sistema utiliza uma arquitetura híbrida segura:
 ## 4. Cargos e permissões
 O sistema utiliza Role-Based Access Control (RBAC). Os cargos base definidos em `permissions.js` são:
 
-- **ADM N1 (Super Admin)**: Acesso total a todos os módulos e configurações do sistema.
-- **ADM N2 (Setor/Chefia)**: Acesso gerencial a Empréstimos, Usuários, Planejamento Acadêmico, Carga Horária e Parceiros (com restrições dependendo da configuração global).
-- **TI (Suporte)**: Foco em Empréstimos, Usuários (gestão técnica) e Planejamento Acadêmico.
-- **RH (Recursos Humanos)**: Acesso exclusivo ao Dashboard e Carga Horária.
-- **Visitante**: Acesso apenas para consulta ao Dashboard (módulos básicos liberados).
+- **ADM N1 (Super Admin)**: Acesso total a todos os módulos (Meu Espaço, Cartão FATEC, Empréstimos, Usuários, Planejamento Acadêmico, Carga Horária, Funcionários, Parceiros).
+- **ADM N2 (Setor/Chefia)**: Acesso gerencial a todos os módulos do sistema (com restrições de escrita dependendo de cada caso).
+- **TI (Suporte)**: Acesso a Meu Espaço, Cartão FATEC, Empréstimos e Usuários.
+- **RH (Recursos Humanos)**: Acesso a Meu Espaço, Cartão FATEC, Carga Horária e Funcionários.
+- **Visitante**: Acesso restrito a Meu Espaço e Cartão FATEC (módulos básicos institucionais).
 
 *Nota: No módulo de Usuários, o ADM N1 pode ajustar granularmente as permissões de "Ver" e "Executar" para cada cargo nos diferentes módulos.*
 
@@ -582,8 +583,8 @@ Para garantir que o front-end estático e a API servida em Node.js (funções se
 - Arquivos alterados:
   - `/api/rotas/ensalamento.js` (Rota `/custom/checkConflict` adaptada para validar conflitos apenas entre aulas presenciais/EAD concorrentes)
   - `/planejamento-academico/firebase-service.js` (Atualização de `checkConflict` para aceitar e passar o `classType`)
-  - `/planejamento-academico/ensalamento.js` (Passagem do `classType` nas validações de conflito ao salvar no calendário)
-  - `/planejamento-academico/simulation-engine.js` (Prioridade de ordenação ajustada, motor `areClassesAvailable` adaptado para não bloquear slots por carga reservada, `scoreWeeklyDistribution` e `attemptAllocation` ajustados para não aplicar penalidades ou marcar a simulação como inviável caso a carga reservada fique como "Não Alocada")
+  - `/planejamento-academico/ensalamento.js` (Passagem do `classType` nas validações de conflito ao salvar no calendário; implementado fallback na função `loadLessonsFromMatrix` para buscar disciplinas de outros períodos letivos do mesmo ano caso não existam no período letivo atual, resolvendo o problema de matrizes não carregando quando turmas e disciplinas estão cadastradas em períodos alternados, como 2026.1 e 2026.2; implementado lazy loading no `openSimulationModal` para carregar disciplinas apenas quando a ferramenta de simulação for aberta, economizando 501 leituras no Firestore a cada carregamento de página e a cada salvamento)
+  - `/planejamento-academico/simulation-engine.js` (Prioridade de ordenação ajustada, motor `areClassesAvailable` adaptado para não bloquear slots por carga reservada, `scoreWeeklyDistribution` e `attemptAllocation` ajustados para não aplicar penalidades ou marcar a simulação como inviável caso a carga reservada fique como "Não Alocada"; corrigido ReferenceError da variável `unallocated` ao substituí-la por `unallocatedBlocking` na verificação de distribuição ideal)
   - `/usuarios/app.js` (Aumento do timer de polling para 2min, verificação de visibilidade da aba via `document.hidden`)
   - `/meu-espaco/meu-espaco.js` (Aumento dos timers de notas e avisos para 2min, verificação de `document.hidden`)
   - `/emprestimo/app.js` (Aumento de timers de polling para 2min, verificação de `document.hidden`)
@@ -600,3 +601,51 @@ Para garantir que o front-end estático e a API servida em Node.js (funções se
   - No simulador, rodar a simulação para uma turma com 6 matérias (ex: 3 presenciais, 2 EAD, 1 Carga Reservada) e verificar se o resultado dá "BOA/IDEAL" e a Carga Reservada vai para "Não Alocada" de forma pacífica.
   - Abrir a aba de Rede (Network) no navegador, alternar de aba (minimizando o Órbita) e verificar que as requisições recorrentes cessam em segundo plano.
 - Como reverter: Desfazer as alterações de código e restaurar as versões anteriores dos arquivos listados.
+
+### [2026-05-28] Cadastro de Itens Genéricos e Suporte a Itens sem QR Code (Módulo de Empréstimos)
+- Autor: Antigravity
+- Branch: main
+- Arquivos alterados:
+  - `/emprestimo/index.html` (Adicionado botão "Cadastrar Item", modal de cadastro com datalist de tipos e checkbox de QR Code; placeholders genéricos)
+  - `/emprestimo/app.js` (Adicionado lógica de controle do modal, submissão do formulário com validação de ID duplicado e persistência no banco, exibição do tipo do item nos cards, desativação de QR em itens configurados sem ele, e refatoração do scanner para extrair IDs arbitrários)
+- Tipo: Nova Funcionalidade e Melhoria de UX
+- Motivo: O módulo de empréstimos suportava apenas notebooks de forma estrita. Havia a necessidade de cadastrar e rastrear outros tipos de itens (projetores, adaptadores, etc.) e controlar se o item possui etiqueta física de QR Code ou não. O scanner de QR Code precisava reconhecer os novos códigos genéricos sem ficar restrito à regex antiga.
+- Impacto: Maior flexibilidade no controle de inventário. Agora o usuário pode gerenciar qualquer ativo da instituição com ou sem rastreamento de QR.
+- Como testar:
+  - Acessar o módulo de Empréstimos.
+  - Clicar em "Cadastrar Item" e preencher um ID (ex: Proj_01) e tipo (ex: Projetor) com a caixa de QR ativa. Validar se o card renderiza e permite "GERAR QR".
+  - Cadastrar outro item desmarcando o QR Code. Confirmar que ele exibe a pill desabilitada "SEM QR".
+  - Escanear um QR code de item genérico e verificar se redireciona para a página de movimentação com sucesso.
+- Como reverter: Desfazer as alterações nos arquivos listados e restaurar as versões anteriores.
+
+### [2026-05-28] Reformulação do Cartão FATEC, QR Code Fixo e Impressão de PDF Dobrável
+- Autor: Antigravity
+- Branch: main
+- Arquivos alterados:
+  - `/fidelidade/index.html` (Reposicionado o botão "Voltar ao Painel" para o canto esquerdo da marca; removida a barra de progresso e timer de 30s; adicionado botão "Imprimir / Gerar PDF" abaixo do QR code; incluída a div `#print-area` no final do corpo; removido seletor de cargo do cartão; adicionada a imagem `logoFatec.png` no lugar do logo de texto FATEC)
+  - `/fidelidade/fidelidade.css` (Atualizado as variáveis globais `:root` para o "Light Theme" do Órbita; mantido o estilo degradê escuro do cartão físico digital; adicionadas regras `@media print` para renderizar o cartão duplo dobrável com a linha tracejada e QR code compacto no verso; estilizada a imagem do logotipo do FATEC no cartão com filtro de brilho invertido para contraste premium; ajustados botões e categorias para o tema claro)
+  - `/fidelidade/fidelidade.js` (Removido o temporizador de QR Code de 30 segundos e sua interface; modificado a URL geradora do QR Code para conter apenas o `uid` estático do usuário; implementado o status checker leve de 2 minutos que respeita a inatividade da aba via `document.hidden`; implementado a função global `window.gerarPDF()` para montagem do layout dobrável com frente e verso e disparo nativo de impressão)
+  - `/fidelidade/validar.html` (Removida a validação obrigatória do parâmetro `t` e expiração de 45 segundos; adaptada a interface do validador para aceitar leituras do QR Code estático com validação direta de status de inatividade no banco de dados)
+- Tipo: Evolução de UI/UX, Otimização de Performance e Redução de Leitura (Firestore)
+- Motivo: Alinhar visualmente o módulo FATEC Fidelidade com a identidade institucional clara do Órbita, melhorar a usabilidade do cartão móvel utilizando a logo oficial `logoFatec.png` sem exibir cargos redundantes, permitir a impressão física de um cartão duplo dobrável com frente e verso (QR Code atrás), e reduzir consideravelmente o consumo de leitura do banco de dados do Firebase.
+- Impacto: Identidade visual perfeitamente alinhada e premium. Menor sobrecarga na cota de leitura do banco Firebase. Lojistas e funcionários conseguem imprimir uma carteirinha frente e verso para recortar e dobrar, e a validação do QR Code estático impresso no papel continua 100% segura contra inativações de conta em tempo real.
+- Como testar:
+  - Acessar `/fidelidade/index.html`. Verificar se a página está sob o Light Theme, se o logo `logoFatec.png` branco e o subtexto "Fidelidade" aparecem na carteirinha e se o cargo não é mais exibido.
+  - Verificar que o botão de voltar está na esquerda do cabeçalho.
+  - Validar que o QR Code estático é renderizado logo abaixo e não pisca a cada 30s.
+  - Clicar em "Imprimir / Gerar PDF" e confirmar se no preview de impressão o cartão duplo (Frente, linha de dobra e Verso com o QR Code) aparece centralizado em folha A4 e sem outros elementos.
+- Como reverter: Desfazer as alterações nos arquivos `/fidelidade/index.html`, `/fidelidade/fidelidade.css`, `/fidelidade/fidelidade.js` e `/fidelidade/validar.html`.
+
+### [2026-05-28] Ajustes de Layout e Branding na Tela de Validação (FATEC Fidelidade)
+- Autor: Antigravity
+- Branch: main
+- Arquivos alterados:
+  - `/fidelidade/validar.html` (Substituído a marca interna "FATEC Fidelidade" pela logo oficial azul da FATEC `fateclogoazul.png` ampliada para 84px dentro do card de status de validação, removendo a logo externa; reajustado a sombra e bordas internas da página para o padrão do Light Theme; alterado o estado inicial e cores de "Carregando..." do laranja para o azul institucional)
+- Tipo: Evolução de UI/UX e Consistência de Branding
+- Motivo: Alinhar a tela pública de validação de cartões com a identidade visual institucional, fornecendo grande visibilidade à logo azul no cabeçalho interno e definindo o carregamento na cor azul padrão da instituição.
+- Impacto: Interface de validação limpa, com branding evidente e profissional.
+- Como testar: Acessar a rota `/fidelidade/validar.html?u=[uid]` e verificar se a logo azul da FATEC está ampliada no cabeçalho do card de status, se o indicador inicial de "Carregando..." está azul, e se não há textos de marca redundantes fora do card.
+- Como reverter: Reverter as edições efetuadas no arquivo `/fidelidade/validar.html`.
+
+
+

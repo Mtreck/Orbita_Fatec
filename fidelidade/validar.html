@@ -25,6 +25,13 @@
       margin: 0 auto;
       text-align: center;
     }
+
+    .validation-card-logo {
+      height: 84px;
+      width: auto;
+      margin-bottom: 0.75rem;
+      object-fit: contain;
+    }
     
     .status-card {
       background: var(--card-bg);
@@ -32,8 +39,8 @@
       border-radius: 24px;
       padding: 2.5rem 2rem;
       width: 100%;
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4), 
-                  inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 40px rgba(3, 20, 38, 0.06), 
+                  0 1px 3px rgba(3, 20, 38, 0.02);
       backdrop-filter: blur(15px);
       position: relative;
       overflow: hidden;
@@ -59,32 +66,40 @@
       position: absolute;
       inset: -5px;
       border-radius: 50%;
-      border: 2px dashed rgba(255, 255, 255, 0.1);
+      border: 2px dashed rgba(3, 20, 38, 0.08);
       animation: spin 10s linear infinite;
     }
 
     /* Valid state */
     .state-valid {
-      background: rgba(16, 185, 129, 0.15);
-      border: 2px solid rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.1);
+      border: 2px solid rgba(16, 185, 129, 0.3);
       color: #10b981;
-      box-shadow: 0 0 30px rgba(16, 185, 129, 0.25);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.15);
     }
     
     /* Invalid state */
     .state-invalid {
-      background: rgba(239, 68, 68, 0.15);
-      border: 2px solid rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.1);
+      border: 2px solid rgba(239, 68, 68, 0.3);
       color: #ef4444;
-      box-shadow: 0 0 30px rgba(239, 68, 68, 0.25);
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.15);
     }
 
     /* Warning / Expired state */
     .state-expired {
-      background: rgba(249, 115, 22, 0.15);
-      border: 2px solid rgba(249, 115, 22, 0.4);
+      background: rgba(249, 115, 22, 0.1);
+      border: 2px solid rgba(249, 115, 22, 0.3);
       color: #f97316;
-      box-shadow: 0 0 30px rgba(249, 115, 22, 0.25);
+      box-shadow: 0 0 30px rgba(249, 115, 22, 0.15);
+    }
+
+    /* Loading state */
+    .state-loading {
+      background: rgba(15, 78, 184, 0.1);
+      border: 2px solid rgba(15, 78, 184, 0.3);
+      color: var(--primary);
+      box-shadow: 0 0 30px rgba(15, 78, 184, 0.15);
     }
 
     .result-badge {
@@ -97,27 +112,33 @@
     }
 
     .result-badge.badge-valid {
-      background: rgba(16, 185, 129, 0.2);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.15);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
     .result-badge.badge-invalid {
-      background: rgba(239, 68, 68, 0.2);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.15);
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
     .result-badge.badge-expired {
-      background: rgba(249, 115, 22, 0.2);
-      color: #fb923c;
-      border: 1px solid rgba(249, 115, 22, 0.4);
+      background: rgba(249, 115, 22, 0.15);
+      color: #ea580c;
+      border: 1px solid rgba(249, 115, 22, 0.3);
+    }
+
+    .result-badge.badge-loading {
+      background: rgba(15, 78, 184, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(15, 78, 184, 0.3);
     }
 
     .employee-info {
       width: 100%;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: 1px solid rgba(3, 20, 38, 0.08);
+      border-bottom: 1px solid rgba(3, 20, 38, 0.08);
       padding: 1.2rem 0;
       display: flex;
       flex-direction: column;
@@ -175,19 +196,16 @@
   <div class="validation-container">
     <div class="status-card">
       
-      <!-- Logo minimalista -->
-      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-        <span style="font-family: var(--font-title); font-weight: 800; font-size: 1.2rem; color: #ffffff;">ÓRBITA</span>
-        <span style="font-family: var(--font-title); font-weight: 600; font-size: 0.85rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">Convênios</span>
-      </div>
+      <!-- Logo FATEC Azul -->
+      <img src="../img/fateclogoazul.png" alt="Logo FATEC" class="validation-card-logo">
 
       <!-- Ícone Animado -->
-      <div id="status-icon" class="status-icon-wrapper state-expired">
+      <div id="status-icon" class="status-icon-wrapper state-loading">
         <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       </div>
 
       <!-- Badge de Status -->
-      <div id="status-badge" class="result-badge badge-expired">Carregando...</div>
+      <div id="status-badge" class="result-badge badge-loading">Carregando...</div>
 
       <!-- Mensagem amigável -->
       <div id="status-message" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary); padding: 0 0.5rem;">
@@ -236,7 +254,6 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const uid = urlParams.get('u');
-    const timestampStr = urlParams.get('t');
 
     const iconEl = document.getElementById('status-icon');
     const badgeEl = document.getElementById('status-badge');
@@ -245,16 +262,6 @@
     const nameEl = document.getElementById('info-name');
     const roleEl = document.getElementById('info-role');
     const timeEl = document.getElementById('info-time');
-
-    function setExpiredState() {
-      iconEl.className = 'status-icon-wrapper state-expired';
-      iconEl.innerHTML = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
-      badgeEl.className = 'result-badge badge-expired';
-      badgeEl.textContent = 'Código Expirado';
-      messageEl.textContent = 'Este QR Code expirou. Peça para o funcionário recarregar ou abrir a carteirinha digital no celular dele para gerar um novo código válido.';
-      infoContainer.style.display = 'none';
-      timeEl.textContent = 'Validação inválida';
-    }
 
     function setInvalidState(msg = 'Funcionário não ativo ou não encontrado.') {
       iconEl.className = 'status-icon-wrapper state-invalid';
@@ -282,17 +289,8 @@
     }
 
     async function validate() {
-      if (!uid || !timestampStr) {
+      if (!uid) {
         setInvalidState('Parâmetros de leitura inválidos. Tente escanear o QR Code novamente.');
-        return;
-      }
-
-      // Validação de expiração (45 segundos de tolerância)
-      const qrTime = parseInt(timestampStr, 10);
-      const nowTime = Math.floor(Date.now() / 1000);
-      const timeDiff = nowTime - qrTime;
-      if (isNaN(qrTime) || timeDiff > 45 || timeDiff < -15) {
-        setExpiredState();
         return;
       }
 
